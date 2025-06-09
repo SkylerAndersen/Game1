@@ -174,7 +174,7 @@ public class FileHandler {
             devResourcePath = System.getProperty("user.dir") + "\\src\\development-resources\\";
             devSaveStatePath = devResourcePath;
             packageResourcePath = "/resources/";
-            packageSaveStatePath = System.getProperty("user.home").substring(0,3)+"\\Questify";
+            packageSaveStatePath = System.getProperty("user.home").substring(0,3)+"\\Game1";
             new File(packageSaveStatePath).mkdir();
             packageSaveStatePath += "\\resources\\";
             new File(packageSaveStatePath.substring(0,packageSaveStatePath.length()-1)).mkdir();
@@ -187,7 +187,7 @@ public class FileHandler {
             devResourcePath = System.getProperty("user.dir") + "/src/development-resources/";
             devSaveStatePath = devResourcePath;
             packageResourcePath = "/resources/";
-            packageSaveStatePath = System.getProperty("user.home")+"/Questify";
+            packageSaveStatePath = System.getProperty("user.home")+"/Game1";
             new File(packageSaveStatePath).mkdir();
             packageSaveStatePath += "/resources/";
             new File(packageSaveStatePath.substring(0,packageSaveStatePath.length()-1)).mkdir();
