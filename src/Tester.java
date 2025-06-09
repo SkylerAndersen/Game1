@@ -61,6 +61,12 @@ public class Tester {
             return 0;
         }
 
+        // test read and write
+        fileHandler.write("test-word","Hello, World!");
+        String output = fileHandler.readString("test-word");
+        if (output == null || output.isEmpty())
+            return 0;
+
         return 1;
     }
 }

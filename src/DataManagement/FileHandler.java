@@ -86,6 +86,7 @@ public class FileHandler {
             return "";
 
         int location = hashMap.retrieve(name);
+        System.out.println("Word " + name + " at location: " + location + " is " + stream.retrieve(location));
         return (String) stream.retrieve(location);
     }
 
@@ -126,6 +127,7 @@ public class FileHandler {
     public void write (String name, String data) {
         int location = stream.add(data);
         hashMap.add(name,location);
+        System.out.println("Word " + name + " at location: " + location + " is " + data);
     }
 
     public void write (String name, boolean[] data) {
