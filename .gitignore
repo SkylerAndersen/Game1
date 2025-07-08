@@ -29,4 +29,5 @@ bin/
 .DS_Store
 
 ### Custom ###
+**/src/development-resources/*.bin
 **/development-resources/*.bin

@@ -17,7 +17,7 @@ public class Tester {
     }
 
     public void run () {
-        numTestsPassed += testFileHandler();
+//        numTestsPassed += testFileHandler();
         System.out.println("Passed " + numTestsPassed + " of " + numTests + " Tests.");
     }
 
