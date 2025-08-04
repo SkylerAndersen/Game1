@@ -1,7 +1,9 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.io.File;
 import java.util.HashMap;
 
 public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
@@ -12,6 +14,8 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
     private HashMap<Component,int[]> coordinates;
     private int bgWidth, bgHeight;
     private JLabel imageContainer;
+    private boolean hasExported;
+    private final InputManager inputManager = InputManager.get();
 
     public ScreenLayoutManager(Container parent) {
         this.parent = parent;
@@ -22,6 +26,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
         bgWidth = 0;
         bgHeight = 0;
         parent.add("Container",imageContainer);
+        hasExported = false;
     }
 
     /**
@@ -68,6 +73,8 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
                 int currHeight = image.getHeight();
                 for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
                     for (int j = 0; j < currHeight && j + x < bgHeight; j++) {
+                        if (image.getRGB(i,j) >> 24 == 0)
+                            continue;
                         canvas.setRGB(i+x,j+y,image.getRGB(i,j));
                     }
                 }
@@ -81,8 +88,11 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
                 BufferedImage image = graphicsElements.get(imageComponent);
                 int currWidth = image.getWidth();
                 int currHeight = image.getHeight();
+                System.out.println("bgWidth: "+bgWidth+", bgHeight: "+bgHeight);
                 for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
-                    for (int j = 0; j < currHeight && j + x < bgHeight; j++) {
+                    for (int j = 0; j < currHeight && j + y < bgHeight; j++) {
+                        if (image.getRGB(i,j) >> 24 == 0)
+                            continue;
                         canvas.setRGB(i+x,j+y,image.getRGB(i,j));
                     }
                 }
@@ -98,6 +108,8 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
                 int currHeight = image.getHeight();
                 for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
                     for (int j = 0; j < currHeight && j + x < bgHeight; j++) {
+                        if (image.getRGB(i,j) >> 24 == 0)
+                            continue;
                         canvas.setRGB(i+x,j+y,image.getRGB(i,j));
                     }
                 }
@@ -134,15 +146,19 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
             return;
 
         // get the image properties
-        layer.put(comp,layerXY[0]);
+        if (!layer.containsKey(comp))
+            layer.put(comp,layerXY[0]);
         int[] XY = {layerXY[1],layerXY[2]};
-        coordinates.put(comp,XY);
+        if (!coordinates.containsKey(comp))
+            coordinates.put(comp,XY);
 
         // get the image itself
         java.awt.Image image = ((ImageIcon) ((JLabel) comp).getIcon()).getImage();
         BufferedImage graphicsElement = new BufferedImage(image.getWidth(null),
                 image.getHeight(null),BufferedImage.TYPE_INT_ARGB);
         graphicsElement.getGraphics().drawImage(image,0,0,null);
+        if (graphicsElements.containsKey(comp))
+            graphicsElements.remove(comp);
         graphicsElements.put(comp,graphicsElement);
 
         // get the width and height of the background
