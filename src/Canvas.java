@@ -1,11 +1,9 @@
 import DataManagement.FileHandler;
 
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
-import java.io.File;
 
 public class Canvas {
     public static final int SAND_WORLD = 0, MIDDLE_WORLD = 1, FOREST_WORLD = 2, BASE_POSE = 3, WALK_POSE = 4,
@@ -18,26 +16,31 @@ public class Canvas {
     private Image character, walkPose, attackPose, altCharacter, altWalkPose, altAttackPose;
     private JLabel wrapper, wrapper2;
     private int characterX, characterY;
+    private final Game gameLogic = Game.get();
+    private ScreenLayoutManager layoutManager;
+    private int worldOffsetX, worldOffsetY;
 
     public Canvas (JPanel applicationScreen) {
         this.applicationScreen = applicationScreen;
         previousCycleTime = System.currentTimeMillis();
         wrapper = new JLabel();
         wrapper2 = new JLabel();
-        applicationScreen.setLayout(new ScreenLayoutManager(applicationScreen));
+        layoutManager = new ScreenLayoutManager(applicationScreen);
+        applicationScreen.setLayout(layoutManager);
 //        applicationScreen.setLayout(null);
+        worldOffsetX = worldOffsetY = 0;
     }
 
-    public void moveCharacter (int x, int y, int deltaTime) {
-        boolean validX = characterX+x >= 0 && characterX+x+character.getWidth(null) <
+    public void moveCharacter (int x, int y) {
+        boolean validX = x >= 0 && x+character.getWidth(null) <
                 background.getWidth(null);
-        boolean validY = characterY+y >= 0 && characterY+y+character.getHeight(null) <
+        boolean validY = y >= 0 && y+character.getHeight(null) <
                 background.getHeight(null);
         if (validX) {
-            characterX += x*deltaTime/20;
+            characterX = x;
         }
         if (validY) {
-            characterY += y*deltaTime/20;
+            characterY = y;
         }
     }
 
@@ -60,29 +63,19 @@ public class Canvas {
             @Override
             public void run() {
                 long time = System.currentTimeMillis();
-                long total = 0;
                 int deltaTime = (int)(time - previousCycleTime);
                 while (true) {
-                    if (inputManager.queryKeyPress('w')) {
-                        moveCharacter(0,-1,deltaTime);
-                    }
-                    if (inputManager.queryKeyPress('a')) {
-                        moveCharacter(-1,0,deltaTime);
-                    }
-                    if (inputManager.queryKeyPress('s')) {
-                        moveCharacter(0,1,deltaTime);
-                    }
-                    if (inputManager.queryKeyPress('d')) {
-                        moveCharacter(1,0,deltaTime);
-                    }
-                    drawWorldFromCoordinates(0,0);
-                    drawCharacterFromCoordinates(MAIN_CHARACTER,BASE_POSE,characterX,characterY,true);
+                    time = System.currentTimeMillis();
+                    deltaTime = (int)(time - previousCycleTime);
+                    previousCycleTime = time;
+                    gameLogic.update(deltaTime,Canvas.this);
+                    drawWorldFromCoordinates(worldOffsetX,worldOffsetY);
+                    drawCharacterFromCoordinates(MAIN_CHARACTER,BASE_POSE,characterX+worldOffsetX,characterY+worldOffsetY,true);
                     applicationScreen.repaint();
                     applicationScreen.revalidate();
 
                     // compute fps
-                    double fps = (int) (100000 / (time - previousCycleTime+0.000001))/100.0;
-//                    previousCycleTime = time;
+                    double fps = (100000 / (time - previousCycleTime+0.000001))/100.0;
 //                    System.out.printf("FPS is approximately %.2f\n", fps);
                 }
             }
@@ -155,5 +148,29 @@ public class Canvas {
             ((ImageIcon) wrapper2.getIcon()).setImage(drawing);
 //        applicationScreen.remove(wrapper2);
         applicationScreen.add(wrapper2,constraints);
+    }
+
+    public void setZoomFactor (double zoomFactor) {
+        layoutManager.setZoomFactor(zoomFactor);
+    }
+
+    public double getZoomFactor () {
+        return layoutManager.getZoomFactor();
+    }
+
+    public void setWorldOffsetX (int offset) {
+        worldOffsetX = offset;
+    }
+
+    public int getWorldOffsetX () {
+        return worldOffsetX;
+    }
+
+    public void setWorldOffsetY (int offset) {
+        worldOffsetY = offset;
+    }
+
+    public int getWorldOffsetY () {
+        return worldOffsetY;
     }
 }

@@ -12,12 +12,12 @@ public class Application {
 
     public void start () {
         windowManager.openWindow();
-
     }
 
     public static Application get () {
         if (singleton == null)
             singleton = new Application();
+
         return singleton;
     }
 

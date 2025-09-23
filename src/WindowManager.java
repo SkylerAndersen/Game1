@@ -30,6 +30,7 @@ public class WindowManager {
     public static WindowManager get () {
         if (singleton == null)
             singleton = new WindowManager();
+
         return singleton;
     }
 }

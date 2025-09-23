@@ -15,6 +15,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
     private int bgWidth, bgHeight;
     private JLabel imageContainer;
     private boolean hasExported;
+    private double zoomFactor;
     private final InputManager inputManager = InputManager.get();
 
     public ScreenLayoutManager(Container parent) {
@@ -27,6 +28,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
         bgHeight = 0;
         parent.add("Container",imageContainer);
         hasExported = false;
+        zoomFactor = 1.0;
     }
 
     /**
@@ -60,6 +62,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
         int width = parent.getSize().width;
         int height = parent.getSize().height;
         double scaleFactor = (double)height / bgHeight;
+        scaleFactor *= zoomFactor;
 //        System.out.printf("Height: %d, bgHeight: %d\n",height,bgHeight);
 
         // generate image to draw
@@ -72,10 +75,13 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
                 int currWidth = image.getWidth();
                 int currHeight = image.getHeight();
                 for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
-                    for (int j = 0; j < currHeight && j + x < bgHeight; j++) {
+                    for (int j = 0; j < currHeight && j + y < bgHeight; j++) {
                         if (image.getRGB(i,j) >> 24 == 0)
                             continue;
-                        canvas.setRGB(i+x,j+y,image.getRGB(i,j));
+                        boolean outOfBoundsX = i+x >= bgWidth || i+x < 0;
+                        boolean outOfBoundsY = j+y >= bgHeight || j+y < 0;
+                        if (!outOfBoundsX && !outOfBoundsY)
+                            canvas.setRGB(i+x,j+y,image.getRGB(i,j));
                     }
                 }
             }
@@ -88,7 +94,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
                 BufferedImage image = graphicsElements.get(imageComponent);
                 int currWidth = image.getWidth();
                 int currHeight = image.getHeight();
-                System.out.println("bgWidth: "+bgWidth+", bgHeight: "+bgHeight);
+//                System.out.println("bgWidth: "+bgWidth+", bgHeight: "+bgHeight);
                 for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
                     for (int j = 0; j < currHeight && j + y < bgHeight; j++) {
                         if (image.getRGB(i,j) >> 24 == 0)
@@ -188,5 +194,13 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
      * */
     @Override
     public void invalidateLayout(Container target) {
+    }
+
+    public void setZoomFactor (double zoomFactor) {
+        this.zoomFactor = zoomFactor;
+    }
+
+    public double getZoomFactor () {
+        return zoomFactor;
     }
 }
