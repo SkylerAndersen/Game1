@@ -12,9 +12,7 @@ public class InputManager {
         keysPressed = new HashSet<>();
         keyListener = new KeyListener() {
             @Override
-            public void keyTyped(KeyEvent e) {
-
-            }
+            public void keyTyped(KeyEvent e) {}
 
             @Override
             public void keyPressed(KeyEvent e) {
@@ -32,6 +30,7 @@ public class InputManager {
     public static InputManager get () {
         if (singleton == null)
             singleton = new InputManager();
+
         return singleton;
     }
 

@@ -1,13 +1,9 @@
 import DataManagement.FileHandler;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.Image;
-import java.awt.image.BufferedImage;
 
 public class Canvas {
-    public static final int SAND_WORLD = 0, MIDDLE_WORLD = 1, FOREST_WORLD = 2, BASE_POSE = 3, WALK_POSE = 4,
-            ATTACK_POSE = 5, MAIN_CHARACTER = 6, ALT_CHARACTER = 7;
+    public static final int SAND_WORLD = 0, MIDDLE_WORLD = 1, FOREST_WORLD = 2;
     private final FileHandler fileHandler = FileHandler.get();
     private final InputManager inputManager = InputManager.get();
     private JPanel applicationScreen;
@@ -27,15 +23,14 @@ public class Canvas {
         wrapper2 = new JLabel();
         layoutManager = new ScreenLayoutManager(applicationScreen);
         applicationScreen.setLayout(layoutManager);
-//        applicationScreen.setLayout(null);
         worldOffsetX = worldOffsetY = 0;
     }
 
     public void moveCharacter (int x, int y) {
-        boolean validX = x >= 0 && x+character.getWidth(null) <
-                background.getWidth(null);
-        boolean validY = y >= 0 && y+character.getHeight(null) <
-                background.getHeight(null);
+        boolean validX = x >= 0 && x+character.getSource().getWidth() <
+                background.getSource().getWidth();
+        boolean validY = y >= 0 && y+character.getSource().getHeight() <
+                background.getSource().getHeight();
         if (validX) {
             characterX = x;
         }
@@ -47,36 +42,46 @@ public class Canvas {
     public void loadWorld (int worldNum) {
         String name = worldNum == 0 ? "sand-world.png" : worldNum == 1 ? "middle-world.png" :
                 "forest-world.png";
-        background = fileHandler.readImage(name);
+        background = new Image(fileHandler.readImage(name));
         drawWorldFromCoordinates(0,0);
     }
 
     public void loadCharacter (int characterNum) {
-        character = fileHandler.readImage("base-pose.png");
-        walkPose = fileHandler.readImage("walk-pose.png");
-        attackPose = fileHandler.readImage("attack-pose.png");
-        drawCharacterFromCoordinates(characterNum,Canvas.BASE_POSE,0,0,true);
+        character = new Image(fileHandler.readImage("base-pose.png"));
+        walkPose = new Image(fileHandler.readImage("walk-pose.png"));
+        attackPose = new Image(fileHandler.readImage("attack-pose.png"));
+        altCharacter = new Image(fileHandler.readImage("base-pose.png"));
+        altWalkPose = new Image(fileHandler.readImage("walk-pose.png"));
+        altAttackPose = new Image(fileHandler.readImage("attack-pose.png"));
+        drawCharacterFromCoordinates(characterNum,Character.BASE_POSE,0,0,true);
     }
 
     public void refreshCycle () {
         Thread render = new Thread(new Runnable() {
             @Override
             public void run() {
-                long time = System.currentTimeMillis();
-                int deltaTime = (int)(time - previousCycleTime);
+                long time;
+                int deltaTime;
+
                 while (true) {
                     time = System.currentTimeMillis();
                     deltaTime = (int)(time - previousCycleTime);
                     previousCycleTime = time;
+
                     gameLogic.update(deltaTime,Canvas.this);
+
                     drawWorldFromCoordinates(worldOffsetX,worldOffsetY);
-                    drawCharacterFromCoordinates(MAIN_CHARACTER,BASE_POSE,characterX+worldOffsetX,characterY+worldOffsetY,true);
+                    drawCharacterFromCoordinates(Character.MAIN_CHARACTER,Character.BASE_POSE,
+                            characterX+worldOffsetX,characterY+worldOffsetY,true);
+                    drawCharacterFromCoordinates(Character.ALT_CHARACTER,Character.BASE_POSE,
+                            characterX+20+worldOffsetX,characterY+worldOffsetY,true);
                     applicationScreen.repaint();
                     applicationScreen.revalidate();
 
                     // compute fps
-                    double fps = (100000 / (time - previousCycleTime+0.000001))/100.0;
-//                    System.out.printf("FPS is approximately %.2f\n", fps);
+                    double fps = (100000 / (deltaTime+0.000001))/100.0;
+                    if (fps < 500)
+                        System.out.printf("\rFPS is approximately %.2f", fps);
                 }
             }
         });
@@ -84,18 +89,7 @@ public class Canvas {
     }
 
     public void drawWorldFromCoordinates (int x, int y) {
-        Integer[] constraints = new Integer[3];
-        constraints[0] = ScreenLayoutManager.BACKGROUND;
-        constraints[1] = x;
-        constraints[2] = y;
-        if (wrapper.getIcon() == null) {
-            wrapper.setIcon(new ImageIcon(background));
-            wrapper.setSize(new Dimension(background.getWidth(null),
-                    background.getHeight(null)));
-        } else
-            ((ImageIcon) wrapper.getIcon()).setImage(background);
-//        applicationScreen.remove(wrapper);
-        applicationScreen.add(wrapper,constraints);
+        drawFromCoordinates(background,x,y,false,ScreenLayoutManager.BACKGROUND);
     }
 
     public void drawCharacterFromCoordinates (int character, int pose, int x, int y) {
@@ -104,50 +98,31 @@ public class Canvas {
 
     public void drawCharacterFromCoordinates (int character, int pose, int x, int y, boolean flipped) {
         // select image
-        Image drawing = (character == MAIN_CHARACTER) ? switch (pose) {
-            case ATTACK_POSE -> attackPose;
-            case WALK_POSE -> walkPose;
+        Image drawing = (character == Character.MAIN_CHARACTER) ? switch (pose) {
+            case Character.ATTACK_POSE -> attackPose;
+            case Character.WALK_POSE -> walkPose;
             default -> this.character;
         } : switch (pose) {
-            case ATTACK_POSE -> altAttackPose;
-            case WALK_POSE -> altWalkPose;
+            case Character.ATTACK_POSE -> altAttackPose;
+            case Character.WALK_POSE -> altWalkPose;
             default -> altCharacter;
         };
 
-        // flip
-        if (flipped) {
-            BufferedImage image = new BufferedImage(drawing.getWidth(null),
-                    drawing.getHeight(null),BufferedImage.TYPE_INT_ARGB);
-            image.getGraphics().drawImage(drawing,0,0,null);
-            image.flush();
-
-            BufferedImage copy = new BufferedImage(drawing.getWidth(null),
-                    drawing.getHeight(null),BufferedImage.TYPE_INT_ARGB);
-            for (int i = 0; i < copy.getWidth()/2; i++) {
-                for (int j = 0; j < copy.getHeight(); j++) {
-                    copy.setRGB(i,j,image.getRGB(image.getWidth()-1-i,j));
-                    copy.setRGB(copy.getWidth()-1-i,j,image.getRGB(i,j));
-                }
-            }
-
-            drawing = copy;
-        }
-
-
         // draw
-        int width = drawing.getWidth(null);
-        int height = drawing.getHeight(null);
+        drawFromCoordinates(drawing,x,y,flipped,ScreenLayoutManager.CHARACTER);
+    }
+
+    public void drawFromCoordinates (Image imToDraw, int x, int y, boolean flipped, int layer) {
+        // gather info for constraints
         Integer[] constraints = new Integer[3];
-        constraints[0] = ScreenLayoutManager.CHARACTER;
+        constraints[0] = layer;
         constraints[1] = x;
         constraints[2] = y;
-        if (wrapper2.getIcon() == null) {
-            wrapper2.setIcon(new ImageIcon(drawing));
-            wrapper2.setSize(width,height);
-        } else
-            ((ImageIcon) wrapper2.getIcon()).setImage(drawing);
-//        applicationScreen.remove(wrapper2);
-        applicationScreen.add(wrapper2,constraints);
+
+        // wrap in swing object and draw to screen
+        if (flipped)
+            imToDraw.setReversed();
+        applicationScreen.add(imToDraw.getWrapper(),constraints);
     }
 
     public void setZoomFactor (double zoomFactor) {

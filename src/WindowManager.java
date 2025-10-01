@@ -21,7 +21,7 @@ public class WindowManager {
         frame.add(animationView,BorderLayout.CENTER);
         Canvas canvas = new Canvas(animationView);
         canvas.loadWorld(Canvas.SAND_WORLD);
-        canvas.loadCharacter(Canvas.MAIN_CHARACTER);
+        canvas.loadCharacter(Character.MAIN_CHARACTER);
         canvas.refreshCycle();
 
         inputManager.consider(frame);

@@ -1,9 +1,7 @@
 import java.awt.Point;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 
 public class Character {
+    public static final int BASE_POSE = 3, WALK_POSE = 4, ATTACK_POSE = 5, MAIN_CHARACTER = 6, ALT_CHARACTER = 7;
     private double movementSpeed, x, y, deltaX, deltaY;
     private StringBuilder logging;
 
