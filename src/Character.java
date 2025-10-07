@@ -16,13 +16,13 @@ public class Character {
         double changeY = directionY * timeDeltaTime * movementSpeed;
 //        System.out.println("changeX: "+changeX+", changeY: "+changeY+", timeDeltaTime: "+timeDeltaTime);
 
-        logging.append("changeX: ");
-        logging.append(changeX);
-        logging.append(", changeY: ");
-        logging.append(changeY);
-        logging.append(", timeDeltaTime: ");
-        logging.append(timeDeltaTime);
-        logging.append('\n');
+//        logging.append("changeX: ");
+//        logging.append(changeX);
+//        logging.append(", changeY: ");
+//        logging.append(changeY);
+//        logging.append(", timeDeltaTime: ");
+//        logging.append(timeDeltaTime);
+//        logging.append('\n');
 
         deltaX += changeX;
         deltaY += changeY;

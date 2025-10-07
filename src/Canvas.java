@@ -73,8 +73,6 @@ public class Canvas {
                     drawWorldFromCoordinates(worldOffsetX,worldOffsetY);
                     drawCharacterFromCoordinates(Character.MAIN_CHARACTER,Character.BASE_POSE,
                             characterX+worldOffsetX,characterY+worldOffsetY,true);
-                    drawCharacterFromCoordinates(Character.ALT_CHARACTER,Character.BASE_POSE,
-                            characterX+20+worldOffsetX,characterY+worldOffsetY,true);
                     applicationScreen.repaint();
                     applicationScreen.revalidate();
 
