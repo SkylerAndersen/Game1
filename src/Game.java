@@ -4,12 +4,24 @@ public class Game {
     private static Game singleton;
     private InputManager inputManager;
     private Character mainCharacter;
+    private AsynchronousDispatch eventQueue;
     private boolean holdingPlus, holdingMinus, holdingH, holdingJ, holdingK, holdingL;
 
     private Game () {
         this.inputManager = InputManager.get();
         holdingPlus = holdingMinus = holdingH = holdingJ = holdingK = holdingL = false;
         mainCharacter = new Character();
+        eventQueue = new AsynchronousDispatch();
+        eventQueue.ensureCreation();
+        int delay = 5000;
+        int delay2 = 10000;
+        System.out.println("Game sets delay: "+delay);
+        eventQueue.schedule(delay2,()->{
+            System.out.println("This is the second scheduled output!");
+        });
+        eventQueue.schedule(delay,()->{
+            System.out.println("This is the scheduled output!");
+        });
     }
 
     public void update (int timeDeltaTime, Canvas screen) {

@@ -78,8 +78,8 @@ public class Canvas {
 
                     // compute fps
                     double fps = (100000 / (deltaTime+0.000001))/100.0;
-                    if (fps < 500)
-                        System.out.printf("\rFPS is approximately %.2f", fps);
+//                    if (fps < 500)
+//                        System.out.printf("\rFPS is approximately %.2f", fps);
                 }
             }
         });
