@@ -3,17 +3,31 @@ import DataManagement.MinHeap;
 public class AsynchronousDispatch {
     private final Thread dispatchThread;
     private final MinHeap<Runnable> queuedTasks = new MinHeap<>();
-    private boolean threadRunning, initialWakeup;
     private final Object lock = new Object();
     private final long programEpoch = System.currentTimeMillis();
+    private boolean threadStarted;
     public AsynchronousDispatch () {
-        threadRunning = true;
-        initialWakeup = false;
+        threadStarted = false;
         dispatchThread = new Thread(this::dispatchThreadUpdateLoop,"customDispatchThread");
+        synchronized (lock) {
+            dispatchThread.start();
+            while (!threadStarted) {
+                try {
+                    lock.wait();
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    return;
+                }
+            }
+        }
     }
 
     private void dispatchThreadUpdateLoop () {
-        while (threadRunning) {
+        synchronized (lock) {
+            threadStarted = true;
+            lock.notifyAll();
+        }
+        while (true) {
 //            System.out.println("DispatchThread looped in: "+Thread.currentThread().getName());
             Runnable task;
             synchronized (lock) {
@@ -58,15 +72,4 @@ public class AsynchronousDispatch {
             lock.notify();
         }
     }
-
-    public synchronized void ensureCreation () {
-        if (threadRunning && initialWakeup)
-            return;
-
-        dispatchThread.start();
-        while (!dispatchThread.isAlive()) {}
-        initialWakeup = true;
-        System.out.println("Dispatch active");
-    }
-
 }

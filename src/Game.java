@@ -12,7 +12,6 @@ public class Game {
         holdingPlus = holdingMinus = holdingH = holdingJ = holdingK = holdingL = false;
         mainCharacter = new Character();
         eventQueue = new AsynchronousDispatch();
-        eventQueue.ensureCreation();
         int delay = 5000;
         int delay2 = 10000;
         System.out.println("Game sets delay: "+delay);
