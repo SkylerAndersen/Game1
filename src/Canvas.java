@@ -1,6 +1,7 @@
 import DataManagement.FileHandler;
 
 import javax.swing.*;
+import java.awt.image.BufferedImage;
 
 public class Canvas {
     public static final int SAND_WORLD = 0, MIDDLE_WORLD = 1, FOREST_WORLD = 2;
@@ -11,7 +12,7 @@ public class Canvas {
     private Image background;
     private Image character, walkPose, attackPose, altCharacter, altWalkPose, altAttackPose;
     private JLabel wrapper, wrapper2;
-    private int characterX, characterY;
+    private int characterX, characterY, characterPose;
     private final Game gameLogic = Game.get();
     private ScreenLayoutManager layoutManager;
     private int worldOffsetX, worldOffsetY;
@@ -24,6 +25,7 @@ public class Canvas {
         layoutManager = new ScreenLayoutManager(applicationScreen);
         applicationScreen.setLayout(layoutManager);
         worldOffsetX = worldOffsetY = 0;
+        characterPose = Character.BASE_POSE;
     }
 
     public void moveCharacter (int x, int y) {
@@ -37,6 +39,13 @@ public class Canvas {
         if (validY) {
             characterY = y;
         }
+    }
+
+    public void setCharacterPose (int characterPose) {
+        if (characterPose < 3 || characterPose > 7)
+            return;
+
+        this.characterPose = characterPose;
     }
 
     public void loadWorld (int worldNum) {
@@ -71,7 +80,7 @@ public class Canvas {
                     gameLogic.update(deltaTime,Canvas.this);
 
                     drawWorldFromCoordinates(worldOffsetX,worldOffsetY);
-                    drawCharacterFromCoordinates(Character.MAIN_CHARACTER,Character.BASE_POSE,
+                    drawCharacterFromCoordinates(Character.MAIN_CHARACTER,characterPose,
                             characterX+worldOffsetX,characterY+worldOffsetY,true);
                     applicationScreen.repaint();
                     applicationScreen.revalidate();
@@ -95,8 +104,8 @@ public class Canvas {
     }
 
     public void drawCharacterFromCoordinates (int character, int pose, int x, int y, boolean flipped) {
-        // select image
-        Image drawing = (character == Character.MAIN_CHARACTER) ? switch (pose) {
+        // select image for state
+        Image state = (character == Character.MAIN_CHARACTER) ? switch (pose) {
             case Character.ATTACK_POSE -> attackPose;
             case Character.WALK_POSE -> walkPose;
             default -> this.character;
@@ -106,8 +115,18 @@ public class Canvas {
             default -> altCharacter;
         };
 
-        // draw
-        drawFromCoordinates(drawing,x,y,flipped,ScreenLayoutManager.CHARACTER);
+        // temporarily swap the image for the state with the Base image
+        Image drawing = (character == Character.MAIN_CHARACTER) ? this.character : altCharacter;
+        if (state != drawing) {
+            BufferedImage drawingSource = drawing.getSource();
+            drawing.changeSource(state.getSource());
+            drawFromCoordinates(drawing,x,y,flipped,ScreenLayoutManager.CHARACTER);
+            // silently change source back
+            drawing.changeSourceWithoutWrapping(drawingSource);
+        } else {
+            // draw otherwise
+            drawFromCoordinates(drawing,x,y,flipped,ScreenLayoutManager.CHARACTER);
+        }
     }
 
     public void drawFromCoordinates (Image imToDraw, int x, int y, boolean flipped, int layer) {
@@ -120,6 +139,8 @@ public class Canvas {
         // wrap in swing object and draw to screen
         if (flipped)
             imToDraw.setReversed();
+        else // ensure we wrapper wraps the current source
+            imToDraw.wrap();
         applicationScreen.add(imToDraw.getWrapper(),constraints);
     }
 

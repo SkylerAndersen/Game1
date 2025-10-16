@@ -12,20 +12,41 @@ public class Game {
         holdingPlus = holdingMinus = holdingH = holdingJ = holdingK = holdingL = false;
         mainCharacter = new Character();
         eventQueue = new AsynchronousDispatch();
-        int delay = 5000;
-        int delay2 = 10000;
-        System.out.println("Game sets delay: "+delay);
-        eventQueue.schedule(delay2,()->{
-            System.out.println("This is the second scheduled output!");
-        });
-        eventQueue.schedule(delay,()->{
-            System.out.println("This is the scheduled output!");
-        });
+        setPoseBase();
+    }
+
+    public void setPoseWalk () {
+        if (!mainCharacter.isWalking())
+            return;
+
+        long time = System.currentTimeMillis();
+        if (time-mainCharacter.getLastWalked() < 500)
+            return;
+        mainCharacter.setLastWalked(time);
+
+        mainCharacter.setPose(Character.WALK_POSE);
+        System.out.println("set to walk");
+        eventQueue.schedule(250,this::setPoseBase);
+        eventQueue.schedule(500, this::setPoseWalk);
+    }
+
+    public void setPoseBase () {
+        long time = System.currentTimeMillis();
+        if (time-mainCharacter.getLastStood() < 500)
+            return;
+        mainCharacter.setLastStood(time);
+        mainCharacter.setPose(Character.BASE_POSE);
+        System.out.println("set to base");
     }
 
     public void update (int timeDeltaTime, Canvas screen) {
         handleMovement(timeDeltaTime,screen);
+        handleCharacterState(screen);
         processDevCameraMovements(screen);
+    }
+
+    public void handleCharacterState (Canvas screen) {
+        screen.setCharacterPose(mainCharacter.getPose());
     }
 
     public void handleMovement (int timeDeltaTime, Canvas screen) {
@@ -47,10 +68,16 @@ public class Game {
             mainCharacter.move(1,0,timeDeltaTime);
         }
 
-        if (!anyPressed)
+        if (!anyPressed) {
+            mainCharacter.setIsWalking(false);
             return;
+        }
         Point pos = mainCharacter.getPos();
         screen.moveCharacter(pos.x,pos.y);
+        if (!mainCharacter.isWalking()) {
+            mainCharacter.setIsWalking(true);
+            setPoseWalk();
+        }
     }
 
     public void processDevCameraMovements (Canvas screen) {

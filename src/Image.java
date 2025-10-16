@@ -18,6 +18,18 @@ public class Image {
         return id;
     }
 
+    public void changeSourceWithoutWrapping (java.awt.Image imageToWrap) {
+        if (!(imageToWrap instanceof BufferedImage)) {
+            BufferedImage temp = new BufferedImage(imageToWrap.getWidth(null),
+                    imageToWrap.getHeight(null),BufferedImage.TYPE_INT_ARGB);
+            temp.getGraphics().drawImage(imageToWrap,0,0,null);
+            temp.flush();
+            imageToWrap = temp;
+        }
+        this.bufferedImage = (BufferedImage) imageToWrap;
+        reversedImage = null;
+    }
+
     public void changeSource (java.awt.Image imageToWrap) {
         if (!(imageToWrap instanceof BufferedImage)) {
             BufferedImage temp = new BufferedImage(imageToWrap.getWidth(null),
@@ -31,7 +43,7 @@ public class Image {
         reversedImage = null;
     }
 
-    private void wrap () {
+    public void wrap () {
         wrap(bufferedImage);
     }
 
