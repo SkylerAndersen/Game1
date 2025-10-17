@@ -3,11 +3,13 @@ package GameLogic;
 import ApplicationManagement.AsynchronousDispatch;
 import ApplicationManagement.InputManager;
 import Graphics.Canvas;
+import Sound.AudioManager;
 
 import java.awt.Point;
 
 public class Game {
     private static Game singleton;
+    private static final AudioManager audioManager = AudioManager.get();
     private InputManager inputManager;
     private Character mainCharacter;
     private AsynchronousDispatch eventQueue;
