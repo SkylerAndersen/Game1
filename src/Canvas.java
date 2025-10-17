@@ -16,6 +16,7 @@ public class Canvas {
     private final Game gameLogic = Game.get();
     private ScreenLayoutManager layoutManager;
     private int worldOffsetX, worldOffsetY;
+    private boolean flippedCharacter;
 
     public Canvas (JPanel applicationScreen) {
         this.applicationScreen = applicationScreen;
@@ -26,6 +27,7 @@ public class Canvas {
         applicationScreen.setLayout(layoutManager);
         worldOffsetX = worldOffsetY = 0;
         characterPose = Character.BASE_POSE;
+        flippedCharacter = false;
     }
 
     public void moveCharacter (int x, int y) {
@@ -48,6 +50,10 @@ public class Canvas {
         this.characterPose = characterPose;
     }
 
+    public void setFlippedCharacter (boolean flippedCharacter) {
+        this.flippedCharacter = flippedCharacter;
+    }
+
     public void loadWorld (int worldNum) {
         String name = worldNum == 0 ? "sand-world.png" : worldNum == 1 ? "middle-world.png" :
                 "forest-world.png";
@@ -62,37 +68,36 @@ public class Canvas {
         altCharacter = new Image(fileHandler.readImage("base-pose.png"));
         altWalkPose = new Image(fileHandler.readImage("walk-pose.png"));
         altAttackPose = new Image(fileHandler.readImage("attack-pose.png"));
-        drawCharacterFromCoordinates(characterNum,Character.BASE_POSE,0,0,true);
+        drawCharacterFromCoordinates(characterNum,Character.BASE_POSE,0,0,false);
     }
 
     public void refreshCycle () {
-        Thread render = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                long time;
-                int deltaTime;
+        Thread render = new Thread(this::canvasRefreshLoop);
+        render.start();
+    }
 
-                while (true) {
-                    time = System.currentTimeMillis();
-                    deltaTime = (int)(time - previousCycleTime);
-                    previousCycleTime = time;
+    public void canvasRefreshLoop () {
+        long time;
+        int deltaTime;
 
-                    gameLogic.update(deltaTime,Canvas.this);
+        while (true) {
+            time = System.currentTimeMillis();
+            deltaTime = (int)(time - previousCycleTime);
+            previousCycleTime = time;
 
-                    drawWorldFromCoordinates(worldOffsetX,worldOffsetY);
-                    drawCharacterFromCoordinates(Character.MAIN_CHARACTER,characterPose,
-                            characterX+worldOffsetX,characterY+worldOffsetY,true);
-                    applicationScreen.repaint();
-                    applicationScreen.revalidate();
+            gameLogic.update(deltaTime,Canvas.this);
 
-                    // compute fps
-                    double fps = (100000 / (deltaTime+0.000001))/100.0;
+            drawWorldFromCoordinates(worldOffsetX,worldOffsetY);
+            drawCharacterFromCoordinates(Character.MAIN_CHARACTER,characterPose,
+                    characterX+worldOffsetX,characterY+worldOffsetY,flippedCharacter);
+            applicationScreen.repaint();
+            applicationScreen.revalidate();
+
+            // compute fps
+            double fps = (100000 / (deltaTime+0.000001))/100.0;
 //                    if (fps < 500)
 //                        System.out.printf("\rFPS is approximately %.2f", fps);
-                }
-            }
-        });
-        render.start();
+        }
     }
 
     public void drawWorldFromCoordinates (int x, int y) {

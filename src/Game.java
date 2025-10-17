@@ -25,7 +25,7 @@ public class Game {
         mainCharacter.setLastWalked(time);
 
         mainCharacter.setPose(Character.WALK_POSE);
-        System.out.println("set to walk");
+//        System.out.println("set to walk");
         eventQueue.schedule(250,this::setPoseBase);
         eventQueue.schedule(500, this::setPoseWalk);
     }
@@ -36,7 +36,7 @@ public class Game {
             return;
         mainCharacter.setLastStood(time);
         mainCharacter.setPose(Character.BASE_POSE);
-        System.out.println("set to base");
+//        System.out.println("set to base");
     }
 
     public void update (int timeDeltaTime, Canvas screen) {
@@ -47,6 +47,7 @@ public class Game {
 
     public void handleCharacterState (Canvas screen) {
         screen.setCharacterPose(mainCharacter.getPose());
+        screen.setFlippedCharacter(mainCharacter.getFlipped());
     }
 
     public void handleMovement (int timeDeltaTime, Canvas screen) {
@@ -68,15 +69,27 @@ public class Game {
             mainCharacter.move(1,0,timeDeltaTime);
         }
 
+        // animation state
         if (!anyPressed) {
             mainCharacter.setIsWalking(false);
             return;
         }
+
+        // movement
         Point pos = mainCharacter.getPos();
         screen.moveCharacter(pos.x,pos.y);
+
+        // animation state
         if (!mainCharacter.isWalking()) {
             mainCharacter.setIsWalking(true);
             setPoseWalk();
+        }
+
+        // flipped state
+        if (pressedD) {
+            mainCharacter.setFlipped(false);
+        } else if (pressedA) {
+            mainCharacter.setFlipped(true);
         }
     }
 

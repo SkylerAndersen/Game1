@@ -3,7 +3,7 @@ import java.awt.Point;
 public class Character {
     public static final int BASE_POSE = 3, WALK_POSE = 4, ATTACK_POSE = 5, MAIN_CHARACTER = 6, ALT_CHARACTER = 7;
     private int pose;
-    private boolean walking;
+    private boolean walking, flipped;
     private double movementSpeed, x, y, deltaX, deltaY;
     private StringBuilder logging;
     private long lastWalked, lastStood;
@@ -83,5 +83,13 @@ public class Character {
 
     public long getLastStood () {
         return lastStood;
+    }
+
+    public void setFlipped (boolean flipped) {
+        this.flipped = flipped;
+    }
+
+    public boolean getFlipped () {
+        return flipped;
     }
 }
