@@ -5,22 +5,48 @@ import ApplicationManagement.InputManager;
 import Graphics.Canvas;
 import Sound.AudioManager;
 
-import java.awt.Point;
+import java.awt.*;
 
 public class Game {
     private static Game singleton;
     private static final AudioManager audioManager = AudioManager.get();
-    private InputManager inputManager;
+    private final InputManager inputManager = InputManager.get();
     private Character mainCharacter;
+    private Canvas mainCanvas;
     private AsynchronousDispatch eventQueue;
-    private boolean holdingPlus, holdingMinus, holdingH, holdingJ, holdingK, holdingL;
 
     private Game () {
-        this.inputManager = InputManager.get();
-        holdingPlus = holdingMinus = holdingH = holdingJ = holdingK = holdingL = false;
+        mainCanvas = new Canvas();
         mainCharacter = new Character();
         eventQueue = new AsynchronousDispatch();
         setPoseBase();
+        createDevCameraControls();
+    }
+
+    public void setCharacterPose (int characterPose) {
+        if (characterPose < 3 || characterPose > 7)
+            return;
+
+        GameRecords.characterPose = characterPose;
+    }
+
+    public void moveCharacter (int x, int y) {
+        if (mainCanvas == null)
+            return;
+
+        Dimension characterSize = mainCanvas.getCharacterScreenSize();
+        Dimension backgroundSize = mainCanvas.getBackgroundScreenSize();
+        boolean validX = x >= 0 && x+characterSize.width < backgroundSize.width;
+        boolean validY = y >= 0 && y+characterSize.height < backgroundSize.height;
+
+        if (validX)
+            GameRecords.characterX = x;
+        if (validY)
+            GameRecords.characterY = y;
+    }
+
+    public void setFlippedCharacter (boolean flippedCharacter) {
+        GameRecords.flippedCharacter = flippedCharacter;
     }
 
     public void setPoseWalk () {
@@ -47,35 +73,38 @@ public class Game {
 //        System.out.println("set to base");
     }
 
-    public void update (int timeDeltaTime, Canvas screen) {
-        handleMovement(timeDeltaTime,screen);
-        handleCharacterState(screen);
-        processDevCameraMovements(screen);
+    public void update (int timeDeltaTime) {
+        handleMovement(timeDeltaTime);
+        handleCharacterState();
+
+        mainCanvas.drawWorldFromCoordinates(GameRecords.worldOffsetX,GameRecords.worldOffsetY);
+        mainCanvas.drawCharacterFromCoordinates(Character.MAIN_CHARACTER,GameRecords.characterPose,
+                GameRecords.characterX+GameRecords.worldOffsetX,GameRecords.characterY+
+                        GameRecords.worldOffsetY, GameRecords.flippedCharacter);
+        mainCanvas.redraw();
     }
 
-    public void handleCharacterState (Canvas screen) {
-        screen.setCharacterPose(mainCharacter.getPose());
-        screen.setFlippedCharacter(mainCharacter.getFlipped());
+    public void handleCharacterState () {
+        setCharacterPose(mainCharacter.getPose());
+        setFlippedCharacter(mainCharacter.getFlipped());
     }
 
-    public void handleMovement (int timeDeltaTime, Canvas screen) {
+    public void handleMovement (int timeDeltaTime) {
         boolean pressedW = inputManager.queryKeyPress('w');
         boolean pressedA = inputManager.queryKeyPress('a');
         boolean pressedS = inputManager.queryKeyPress('s');
         boolean pressedD = inputManager.queryKeyPress('d');
         boolean anyPressed = pressedW || pressedA || pressedS || pressedD;
-        if (pressedW) {
+
+        if (pressedW)
             mainCharacter.move(0,-1,timeDeltaTime);
-        }
-        if (pressedA) {
+        if (pressedA)
             mainCharacter.move(-1,0,timeDeltaTime);
-        }
-        if (pressedS) {
+        if (pressedS)
             mainCharacter.move(0,1,timeDeltaTime);
-        }
-        if (pressedD) {
+        if (pressedD)
             mainCharacter.move(1,0,timeDeltaTime);
-        }
+
 
         // animation state
         if (!anyPressed) {
@@ -85,7 +114,7 @@ public class Game {
 
         // movement
         Point pos = mainCharacter.getPos();
-        screen.moveCharacter(pos.x,pos.y);
+        moveCharacter(pos.x,pos.y);
 
         // animation state
         if (!mainCharacter.isWalking()) {
@@ -101,43 +130,13 @@ public class Game {
         }
     }
 
-    public void processDevCameraMovements (Canvas screen) {
-        if (inputManager.queryKeyPress('+') && !holdingPlus) {
-            screen.setZoomFactor(screen.getZoomFactor()+0.1);
-        }
-        if (inputManager.queryKeyPress('-') && !holdingMinus) {
-            screen.setZoomFactor(screen.getZoomFactor()-0.1);
-        }
-        if (inputManager.queryKeyPress('h') && !holdingH) {
-            screen.setWorldOffsetX(screen.getWorldOffsetX()+10);
-        }
-        if (inputManager.queryKeyPress('j') && !holdingJ) {
-            screen.setWorldOffsetY(screen.getWorldOffsetY()-10);
-        }
-        if (inputManager.queryKeyPress('k') && !holdingK) {
-            screen.setWorldOffsetY(screen.getWorldOffsetY()+10);
-        }
-        if (inputManager.queryKeyPress('l') && !holdingL) {
-            screen.setWorldOffsetX(screen.getWorldOffsetX()-10);
-        }
-        if (inputManager.queryKeyPress('+') != holdingPlus) {
-            holdingPlus = !holdingPlus;
-        }
-        if (inputManager.queryKeyPress('-') != holdingMinus) {
-            holdingMinus = !holdingMinus;
-        }
-        if (inputManager.queryKeyPress('h') != holdingH) {
-            holdingH = !holdingH;
-        }
-        if (inputManager.queryKeyPress('j') != holdingJ) {
-            holdingJ = !holdingJ;
-        }
-        if (inputManager.queryKeyPress('k') != holdingK) {
-            holdingK = !holdingK;
-        }
-        if (inputManager.queryKeyPress('l') != holdingL) {
-            holdingL = !holdingL;
-        }
+    public void createDevCameraControls() {
+        inputManager.addCallback('+', () -> {mainCanvas.setZoomFactor(mainCanvas.getZoomFactor()+0.1);});
+        inputManager.addCallback('-', () -> {mainCanvas.setZoomFactor(mainCanvas.getZoomFactor()-0.1);});
+        inputManager.addCallback('h', () -> {GameRecords.worldOffsetX += 10;});
+        inputManager.addCallback('j', () -> {GameRecords.worldOffsetY -= 10;});
+        inputManager.addCallback('k', () -> {GameRecords.worldOffsetY += 10;});
+        inputManager.addCallback('l', () -> {GameRecords.worldOffsetX -= 10;});
     }
 
     public static Game get () {
@@ -145,5 +144,9 @@ public class Game {
             singleton = new Game();
 
         return singleton;
+    }
+
+    public Canvas getMainCanvas () {
+        return mainCanvas;
     }
 }

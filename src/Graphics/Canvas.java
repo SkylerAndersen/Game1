@@ -1,63 +1,30 @@
 package Graphics;
 
-import ApplicationManagement.InputManager;
 import DataManagement.FileHandler;
 import GameLogic.Character;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import GameLogic.Game;
 
 
 public class Canvas {
     public static final int SAND_WORLD = 0, MIDDLE_WORLD = 1, FOREST_WORLD = 2;
     private final FileHandler fileHandler = FileHandler.get();
-    private final InputManager inputManager = InputManager.get();
-    private JPanel applicationScreen;
-    private long previousCycleTime;
+    private final JPanel applicationScreen;
     private Image background;
     private Image character, walkPose, attackPose, altCharacter, altWalkPose, altAttackPose;
-    private JLabel wrapper, wrapper2;
-    private int characterX, characterY, characterPose;
-    private final Game gameLogic = Game.get();
     private ScreenLayoutManager layoutManager;
-    private int worldOffsetX, worldOffsetY;
-    private boolean flippedCharacter;
 
-    public Canvas (JPanel applicationScreen) {
-        this.applicationScreen = applicationScreen;
-        previousCycleTime = System.currentTimeMillis();
-        wrapper = new JLabel();
-        wrapper2 = new JLabel();
+    public Canvas () {
+        this.applicationScreen = new JPanel();
         layoutManager = new ScreenLayoutManager(applicationScreen);
         applicationScreen.setLayout(layoutManager);
-        worldOffsetX = worldOffsetY = 0;
-        characterPose = Character.BASE_POSE;
-        flippedCharacter = false;
     }
 
-    public void moveCharacter (int x, int y) {
-        boolean validX = x >= 0 && x+character.getSource().getWidth() <
-                background.getSource().getWidth();
-        boolean validY = y >= 0 && y+character.getSource().getHeight() <
-                background.getSource().getHeight();
-        if (validX) {
-            characterX = x;
-        }
-        if (validY) {
-            characterY = y;
-        }
-    }
-
-    public void setCharacterPose (int characterPose) {
-        if (characterPose < 3 || characterPose > 7)
-            return;
-
-        this.characterPose = characterPose;
-    }
-
-    public void setFlippedCharacter (boolean flippedCharacter) {
-        this.flippedCharacter = flippedCharacter;
+    public void redraw () {
+        applicationScreen.repaint();
+        applicationScreen.revalidate();
     }
 
     public void loadWorld (int worldNum) {
@@ -77,41 +44,8 @@ public class Canvas {
         drawCharacterFromCoordinates(characterNum, Character.BASE_POSE,0,0,false);
     }
 
-    public void refreshCycle () {
-        Thread render = new Thread(this::canvasRefreshLoop);
-        render.start();
-    }
-
-    public void canvasRefreshLoop () {
-        long time;
-        int deltaTime;
-
-        while (true) {
-            time = System.currentTimeMillis();
-            deltaTime = (int)(time - previousCycleTime);
-            previousCycleTime = time;
-
-            gameLogic.update(deltaTime,Canvas.this);
-
-            drawWorldFromCoordinates(worldOffsetX,worldOffsetY);
-            drawCharacterFromCoordinates(Character.MAIN_CHARACTER,characterPose,
-                    characterX+worldOffsetX,characterY+worldOffsetY,flippedCharacter);
-            applicationScreen.repaint();
-            applicationScreen.revalidate();
-
-            // compute fps
-            double fps = (100000 / (deltaTime+0.000001))/100.0;
-//                    if (fps < 500)
-//                        System.out.printf("\rFPS is approximately %.2f", fps);
-        }
-    }
-
     public void drawWorldFromCoordinates (int x, int y) {
         drawFromCoordinates(background,x,y,false,ScreenLayoutManager.BACKGROUND);
-    }
-
-    public void drawCharacterFromCoordinates (int character, int pose, int x, int y) {
-        drawCharacterFromCoordinates(character,pose,x,y,false);
     }
 
     public void drawCharacterFromCoordinates (int character, int pose, int x, int y, boolean flipped) {
@@ -150,7 +84,7 @@ public class Canvas {
         // wrap in swing object and draw to screen
         if (flipped)
             imToDraw.setReversed();
-        else // ensure we wrapper wraps the current source
+        else // ensure the wrapper wraps the current source
             imToDraw.wrap();
         applicationScreen.add(imToDraw.getWrapper(),constraints);
     }
@@ -163,19 +97,15 @@ public class Canvas {
         return layoutManager.getZoomFactor();
     }
 
-    public void setWorldOffsetX (int offset) {
-        worldOffsetX = offset;
+    public Dimension getCharacterScreenSize () {
+        return new Dimension(character.getSource().getWidth(),character.getSource().getHeight());
     }
 
-    public int getWorldOffsetX () {
-        return worldOffsetX;
+    public Dimension getBackgroundScreenSize () {
+        return new Dimension(background.getSource().getWidth(),background.getSource().getHeight());
     }
 
-    public void setWorldOffsetY (int offset) {
-        worldOffsetY = offset;
-    }
-
-    public int getWorldOffsetY () {
-        return worldOffsetY;
+    public JPanel getApplicationScreen () {
+        return applicationScreen;
     }
 }
