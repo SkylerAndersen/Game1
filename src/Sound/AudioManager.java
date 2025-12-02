@@ -19,19 +19,22 @@ public class AudioManager {
             byte byte2 = backgroundMusicOriginal[i*2+1];
             byte byte3 = backgroundMusicOriginal[i*2+2];
             byte byte4 = backgroundMusicOriginal[i*2+3];
-            int sample1 = ((byte1 << 8) & 0x0000FF00) | ((int)(byte2) &0x000000FF);
-            int sample2 = ((byte3 << 8) & 0x0000FF00) | ((int)(byte4) &0x000000FF);
+            int sample1 = ((byte1 << 8) & 0x0000FF00) | ((int)(byte2) & 0x000000FF);
+            int sample2 = ((byte3 << 8) & 0x0000FF00) | ((int)(byte4) & 0x000000FF);
             int unifiedSample = (sample1+sample2)/2;
             byte newSample1 = (byte) ((unifiedSample >> 8) & 0x000000FF);
             byte newSample2 = (byte) (unifiedSample & 0x000000FF);
             backgroundMusic[i] = newSample1;
             backgroundMusic[i+1] = newSample2;
         }
+    }
+
+    public void play () {
         audioThread = new Thread(this::audioTask,"audioThread");
         audioThread.start();
     }
 
-    public void audioTask () {
+    private void audioTask () {
         while (true) {
             playBackgroundMusic();
         }

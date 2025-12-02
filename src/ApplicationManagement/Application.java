@@ -1,15 +1,11 @@
 package ApplicationManagement;
 
-import DataManagement.FileHandler;
-import Graphics.ImageUtilities;
-import Graphics.Canvas;
 import GameLogic.Game;
 import javax.swing.*;
 import java.awt.*;
 
 public class Application {
     private static Application singleton;
-    private final FileHandler fileHandler = FileHandler.get();
     private final InputManager inputManager = InputManager.get();
     private final Game game = Game.get();
 
@@ -20,17 +16,10 @@ public class Application {
         frame.setLocationRelativeTo(null);
         frame.setLayout(new BorderLayout());
         frame.setVisible(true);
-
-        Canvas mainCanvas = game.getMainCanvas();
-        frame.add(mainCanvas.getApplicationScreen(),BorderLayout.CENTER);
-        ImageUtilities.loadBackground(Canvas.SAND_WORLD);
-        ImageUtilities.loadCharacters();
-        refreshCycle();
+        frame.add(game.getMainCanvas(),BorderLayout.CENTER);
 
         inputManager.consider(frame);
-    }
 
-    public void refreshCycle () {
         Thread loop = new Thread(this::gameLoop,"game-loop");
         loop.start();
     }
@@ -59,9 +48,5 @@ public class Application {
             singleton = new Application();
 
         return singleton;
-    }
-
-    public FileHandler getFileHandler () {
-        return fileHandler;
     }
 }

@@ -16,40 +16,19 @@ public class Game {
     private static final AudioManager audioManager = AudioManager.get();
     private final InputManager inputManager = InputManager.get();
     private Character mainCharacter;
+    private Background background;
     private Canvas mainCanvas;
     private AsynchronousDispatch eventQueue;
 
     private Game () {
         mainCanvas = new Canvas(new Dimension(640,360));
         mainCharacter = new Character();
+        background = new Background();
         mainCharacter.setPos(new Point(320,220));
         eventQueue = new AsynchronousDispatch();
         setPoseBase();
         createDevCameraControls();
-    }
-
-    public void setPoseWalk () {
-        if (!mainCharacter.isWalking())
-            return;
-
-        long time = System.currentTimeMillis();
-        if (time-mainCharacter.getLastWalked() < 500)
-            return;
-        mainCharacter.setLastWalked(time);
-
-        mainCharacter.setPose(Character.WALK_POSE);
-//        System.out.println("set to walk");
-        eventQueue.schedule(250,this::setPoseBase);
-        eventQueue.schedule(500, this::setPoseWalk);
-    }
-
-    public void setPoseBase () {
-        long time = System.currentTimeMillis();
-        if (time-mainCharacter.getLastStood() < 500)
-            return;
-        mainCharacter.setLastStood(time);
-        mainCharacter.setPose(Character.BASE_POSE);
-//        System.out.println("set to base");
+        audioManager.play();
     }
 
     public void update (int timeDeltaTime) {
@@ -57,24 +36,21 @@ public class Game {
         handleGraphics();
     }
 
-    public void handleGraphics () {
-        // draw background
-        Background bg = ImageUtilities.getBackground();
-        mainCanvas.draw(bg.getImage(),bg.getX(),bg.getY(),false,bg.getLayer());
+    private void handleGraphics () {
+        Image backgroundImage = ImageUtilities.getBackground();
+        mainCanvas.draw(backgroundImage,background.getX(),background.getY(),false,background.getLayer());
 
-        // draw character
         Pair<Image,Runnable> imageRunnablePair = mainCharacter.getImageToDrawAndCleanup(Character.MAIN_CHARACTER,
                 mainCharacter.getPose());
-        mainCanvas.setDrawCleanup(imageRunnablePair.getVal2());
-        mainCanvas.draw(imageRunnablePair.getVal1(),mainCharacter.getPos().x+bg.getX(),
-                mainCharacter.getPos().y+bg.getY(), mainCharacter.getFlipped(), ScreenLayoutManager.CHARACTER);
-        mainCanvas.runDrawCleanup();
+        mainCanvas.draw(imageRunnablePair.getVal1(),mainCharacter.getPos().x+background.getX(),
+                mainCharacter.getPos().y+background.getY(), mainCharacter.getFlipped(),
+                ScreenLayoutManager.CHARACTER);
+        imageRunnablePair.getVal2().run();
 
-        // refresh canvas
-        mainCanvas.redraw();
+        mainCanvas.refresh();
     }
 
-    public void handleMovement (int timeDeltaTime) {
+    private void handleMovement (int timeDeltaTime) {
         boolean pressedW = inputManager.queryKeyPress('w');
         boolean pressedA = inputManager.queryKeyPress('a');
         boolean pressedS = inputManager.queryKeyPress('s');
@@ -111,17 +87,39 @@ public class Game {
         }
     }
 
-    public void createDevCameraControls() {
+    private void createDevCameraControls() {
         inputManager.addCallback('+', () -> {mainCanvas.setZoomFactor(mainCanvas.getZoomFactor()+0.1);});
         inputManager.addCallback('-', () -> {mainCanvas.setZoomFactor(mainCanvas.getZoomFactor()-0.1);});
-        inputManager.addCallback('h', () -> {Background bg = ImageUtilities.getBackground();
-            bg.setX(bg.getX()+10);});
-        inputManager.addCallback('j', () -> {Background bg = ImageUtilities.getBackground();
-            bg.setY(bg.getY()-10);});
-        inputManager.addCallback('k', () -> {Background bg = ImageUtilities.getBackground();
-            bg.setY(bg.getY()+10);});
-        inputManager.addCallback('l', () -> {Background bg = ImageUtilities.getBackground();
-            bg.setX(bg.getX()-10);});
+        inputManager.addCallback('h', () -> {background.setX(background.getX()+10);});
+        inputManager.addCallback('j', () -> {background.setY(background.getY()-10);});
+        inputManager.addCallback('k', () -> {background.setY(background.getY()+10);});
+        inputManager.addCallback('l', () -> {background.setX(background.getX()-10);});
+    }
+
+    private void setPoseWalk () {
+        if (!mainCharacter.isWalking())
+            return;
+
+        long time = System.currentTimeMillis();
+        if (time-mainCharacter.getLastWalked() < 500)
+            return;
+        mainCharacter.setLastWalked(time);
+
+        mainCharacter.setPose(Character.WALK_POSE);
+        eventQueue.schedule(250,this::setPoseBase);
+        eventQueue.schedule(500, this::setPoseWalk);
+    }
+
+    private void setPoseBase () {
+        long time = System.currentTimeMillis();
+        if (time-mainCharacter.getLastStood() < 500)
+            return;
+        mainCharacter.setLastStood(time);
+        mainCharacter.setPose(Character.BASE_POSE);
+    }
+
+    public Canvas getMainCanvas () {
+        return mainCanvas;
     }
 
     public static Game get () {
@@ -129,9 +127,5 @@ public class Game {
             singleton = new Game();
 
         return singleton;
-    }
-
-    public Canvas getMainCanvas () {
-        return mainCanvas;
     }
 }

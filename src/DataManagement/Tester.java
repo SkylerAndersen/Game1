@@ -28,7 +28,7 @@ public class Tester {
         numTests++;
 
         // create file handler and read in test data
-        FileHandler fileHandler = application.getFileHandler();
+        FileHandler fileHandler = FileHandler.get();
         byte[] audio = fileHandler.readAudio("audio.wav");
         BufferedImage image = fileHandler.readImage("image.png");
 

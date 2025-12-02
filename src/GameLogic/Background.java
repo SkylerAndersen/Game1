@@ -1,23 +1,10 @@
 package GameLogic;
 
-import Graphics.Image;
 import Graphics.ScreenLayoutManager;
 
-import java.awt.*;
-
 public class Background {
-    private final Image backgroundImage;
+    public static final int SAND_WORLD = 0, MIDDLE_WORLD = 1, FOREST_WORLD = 2;
     private int x, y;
-    private Dimension size;
-
-    public Background (Image backgroundImage) {
-        this.backgroundImage = backgroundImage;
-        size = new Dimension(backgroundImage.getSource().getWidth(),backgroundImage.getSource().getHeight());
-    }
-
-    public Image getImage () {
-        return backgroundImage;
-    }
 
     public void setX (int x) {
         this.x = x;
@@ -37,9 +24,5 @@ public class Background {
 
     public int getLayer () {
         return ScreenLayoutManager.BACKGROUND;
-    }
-
-    public Dimension getSize() {
-        return size;
     }
 }

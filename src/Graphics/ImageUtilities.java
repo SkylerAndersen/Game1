@@ -5,10 +5,10 @@ import GameLogic.Background;
 import GameLogic.Character;
 
 import java.awt.Dimension;
-import java.awt.image.BufferedImage;
+
 
 public class ImageUtilities {
-    private static Background background;
+    private static Image background;
     private static Image character, walkPose, attackPose, altCharacter, altWalkPose, altAttackPose;
     private static final FileHandler fileHandler = FileHandler.get();
     private static Dimension characterScreenSize;
@@ -22,18 +22,25 @@ public class ImageUtilities {
         altAttackPose = new Image(fileHandler.readImage("attack-pose.png"));
         characterScreenSize = new Dimension(character.getSource().getWidth(),character.getSource().getHeight());
     }
+
     public static void loadBackground (int worldNum) {
         String name = worldNum == 0 ? "sand-world.png" : worldNum == 1 ? "middle-world.png" :
                 "forest-world.png";
-        background = new Background(new Image(fileHandler.readImage(name)));
-        BufferedImage backgroundSource = background.getImage().getSource();
-        backgroundScreenSize = new Dimension(backgroundSource.getWidth(),backgroundSource.getHeight());
+        background = new Image(fileHandler.readImage(name));
+        backgroundScreenSize = new Dimension(background.getSource().getWidth(),background.getSource().getHeight());
     }
-    public static Background getBackground () {
+
+    public static Image getBackground () {
+        if (background == null)
+            loadBackground(Background.SAND_WORLD);
+
         return background;
     }
 
     public static Image getCharacter (int character, int pose) {
+        if (ImageUtilities.character == null)
+            loadCharacters();
+
         return (character == Character.MAIN_CHARACTER) ? switch (pose) {
             case Character.ATTACK_POSE -> attackPose;
             case Character.WALK_POSE -> walkPose;
