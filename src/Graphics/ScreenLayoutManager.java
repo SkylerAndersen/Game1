@@ -14,7 +14,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
     private HashMap<Component,BufferedImage> graphicsElements;
     private HashMap<Component,Integer> layer;
     private HashMap<Component,int[]> coordinates;
-    private int bgWidth, bgHeight;
+    private Dimension backgroundSize;
     private JLabel imageContainer;
     private boolean hasExported;
     private double zoomFactor;
@@ -26,8 +26,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
         coordinates = new HashMap<>();
         graphicsElements = new HashMap<>();
         imageContainer = new JLabel();
-        bgWidth = 0;
-        bgHeight = 0;
+        backgroundSize = parent.getSize();
         parent.add("Container",imageContainer);
         hasExported = false;
         zoomFactor = 1.0;
@@ -61,6 +60,8 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
 
     @Override
     public void layoutContainer(Container parent) {
+        int bgWidth = backgroundSize.width;
+        int bgHeight = backgroundSize.height;
         int width = parent.getSize().width;
         int height = parent.getSize().height;
         double scaleFactor = (double)height / bgHeight;
@@ -168,12 +169,10 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
         if (graphicsElements.containsKey(comp))
             graphicsElements.remove(comp);
         graphicsElements.put(comp,graphicsElement);
+    }
 
-        // get the width and height of the background
-        if (graphicsElement.getWidth() > bgWidth)
-            bgWidth = graphicsElement.getWidth();
-        if (graphicsElement.getHeight() > bgHeight)
-            bgHeight = graphicsElement.getHeight();
+    public void setBackgroundSize (Dimension newSize) {
+        backgroundSize = newSize;
     }
 
     @Override

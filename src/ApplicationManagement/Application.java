@@ -1,7 +1,7 @@
 package ApplicationManagement;
 
 import DataManagement.FileHandler;
-import GameLogic.Character;
+import Graphics.ImageUtilities;
 import Graphics.Canvas;
 import GameLogic.Game;
 import javax.swing.*;
@@ -23,8 +23,8 @@ public class Application {
 
         Canvas mainCanvas = game.getMainCanvas();
         frame.add(mainCanvas.getApplicationScreen(),BorderLayout.CENTER);
-        mainCanvas.loadWorld(Canvas.SAND_WORLD);
-        mainCanvas.loadCharacter(Character.MAIN_CHARACTER);
+        ImageUtilities.loadBackground(Canvas.SAND_WORLD);
+        ImageUtilities.loadCharacters();
         refreshCycle();
 
         inputManager.consider(frame);

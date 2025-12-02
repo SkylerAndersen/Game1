@@ -2,8 +2,12 @@ package GameLogic;
 
 import ApplicationManagement.AsynchronousDispatch;
 import ApplicationManagement.InputManager;
+import DataManagement.Pair;
 import Graphics.Canvas;
+import Graphics.ScreenLayoutManager;
+import Graphics.ImageUtilities;
 import Sound.AudioManager;
+import Graphics.Image;
 
 import java.awt.*;
 
@@ -16,37 +20,12 @@ public class Game {
     private AsynchronousDispatch eventQueue;
 
     private Game () {
-        mainCanvas = new Canvas();
+        mainCanvas = new Canvas(new Dimension(640,360));
         mainCharacter = new Character();
+        mainCharacter.setPos(new Point(320,220));
         eventQueue = new AsynchronousDispatch();
         setPoseBase();
         createDevCameraControls();
-    }
-
-    public void setCharacterPose (int characterPose) {
-        if (characterPose < 3 || characterPose > 7)
-            return;
-
-        GameRecords.characterPose = characterPose;
-    }
-
-    public void moveCharacter (int x, int y) {
-        if (mainCanvas == null)
-            return;
-
-        Dimension characterSize = mainCanvas.getCharacterScreenSize();
-        Dimension backgroundSize = mainCanvas.getBackgroundScreenSize();
-        boolean validX = x >= 0 && x+characterSize.width < backgroundSize.width;
-        boolean validY = y >= 0 && y+characterSize.height < backgroundSize.height;
-
-        if (validX)
-            GameRecords.characterX = x;
-        if (validY)
-            GameRecords.characterY = y;
-    }
-
-    public void setFlippedCharacter (boolean flippedCharacter) {
-        GameRecords.flippedCharacter = flippedCharacter;
     }
 
     public void setPoseWalk () {
@@ -75,18 +54,24 @@ public class Game {
 
     public void update (int timeDeltaTime) {
         handleMovement(timeDeltaTime);
-        handleCharacterState();
-
-        mainCanvas.drawWorldFromCoordinates(GameRecords.worldOffsetX,GameRecords.worldOffsetY);
-        mainCanvas.drawCharacterFromCoordinates(Character.MAIN_CHARACTER,GameRecords.characterPose,
-                GameRecords.characterX+GameRecords.worldOffsetX,GameRecords.characterY+
-                        GameRecords.worldOffsetY, GameRecords.flippedCharacter);
-        mainCanvas.redraw();
+        handleGraphics();
     }
 
-    public void handleCharacterState () {
-        setCharacterPose(mainCharacter.getPose());
-        setFlippedCharacter(mainCharacter.getFlipped());
+    public void handleGraphics () {
+        // draw background
+        Background bg = ImageUtilities.getBackground();
+        mainCanvas.draw(bg.getImage(),bg.getX(),bg.getY(),false,bg.getLayer());
+
+        // draw character
+        Pair<Image,Runnable> imageRunnablePair = mainCharacter.getImageToDrawAndCleanup(Character.MAIN_CHARACTER,
+                mainCharacter.getPose());
+        mainCanvas.setDrawCleanup(imageRunnablePair.getVal2());
+        mainCanvas.draw(imageRunnablePair.getVal1(),mainCharacter.getPos().x+bg.getX(),
+                mainCharacter.getPos().y+bg.getY(), mainCharacter.getFlipped(), ScreenLayoutManager.CHARACTER);
+        mainCanvas.runDrawCleanup();
+
+        // refresh canvas
+        mainCanvas.redraw();
     }
 
     public void handleMovement (int timeDeltaTime) {
@@ -112,10 +97,6 @@ public class Game {
             return;
         }
 
-        // movement
-        Point pos = mainCharacter.getPos();
-        moveCharacter(pos.x,pos.y);
-
         // animation state
         if (!mainCharacter.isWalking()) {
             mainCharacter.setIsWalking(true);
@@ -133,10 +114,14 @@ public class Game {
     public void createDevCameraControls() {
         inputManager.addCallback('+', () -> {mainCanvas.setZoomFactor(mainCanvas.getZoomFactor()+0.1);});
         inputManager.addCallback('-', () -> {mainCanvas.setZoomFactor(mainCanvas.getZoomFactor()-0.1);});
-        inputManager.addCallback('h', () -> {GameRecords.worldOffsetX += 10;});
-        inputManager.addCallback('j', () -> {GameRecords.worldOffsetY -= 10;});
-        inputManager.addCallback('k', () -> {GameRecords.worldOffsetY += 10;});
-        inputManager.addCallback('l', () -> {GameRecords.worldOffsetX -= 10;});
+        inputManager.addCallback('h', () -> {Background bg = ImageUtilities.getBackground();
+            bg.setX(bg.getX()+10);});
+        inputManager.addCallback('j', () -> {Background bg = ImageUtilities.getBackground();
+            bg.setY(bg.getY()-10);});
+        inputManager.addCallback('k', () -> {Background bg = ImageUtilities.getBackground();
+            bg.setY(bg.getY()+10);});
+        inputManager.addCallback('l', () -> {Background bg = ImageUtilities.getBackground();
+            bg.setX(bg.getX()-10);});
     }
 
     public static Game get () {

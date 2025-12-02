@@ -1,21 +1,42 @@
 package GameLogic;
 
-import java.awt.Point;
+import DataManagement.Pair;
+import Graphics.Image;
+import Graphics.ImageUtilities;
+
+import java.awt.*;
+import java.awt.image.BufferedImage;
 
 public class Character {
     public static final int BASE_POSE = 3, WALK_POSE = 4, ATTACK_POSE = 5, MAIN_CHARACTER = 6, ALT_CHARACTER = 7;
     private int pose;
     private boolean walking, flipped;
-    private double movementSpeed, x, y, deltaX, deltaY;
+    private double movementSpeed, x, y;
     private StringBuilder logging;
     private long lastWalked, lastStood;
 
     public Character () {
         movementSpeed = 0.025;
-        x = y = this.deltaX = this.deltaY = 0;
+        x = y = 0;
         logging = new StringBuilder(1000);
         pose = BASE_POSE;
         lastWalked = lastStood = 0;
+    }
+
+    public Pair<Image,Runnable> getImageToDrawAndCleanup (int character, int pose) {
+        // select image for state
+        Image state = ImageUtilities.getCharacter(character,pose);
+
+        // temporarily swap the image for the state with the Base image
+        Image drawing = (character == Character.MAIN_CHARACTER) ? ImageUtilities.getCharacter(6,0) :
+                ImageUtilities.getCharacter(7,0);
+
+        BufferedImage drawingSource = drawing.getSource();
+        if (state != drawing)
+            drawing.changeSource(state.getSource());
+
+        // silently change source back
+        return new Pair<>(drawing, () -> {drawing.changeSourceWithoutWrapping(drawingSource);});
     }
 
     public void setPose (int pose) {
@@ -29,33 +50,27 @@ public class Character {
     }
 
     public void move (int directionX, int directionY, int timeDeltaTime) {
-        double changeX = directionX * timeDeltaTime * movementSpeed;
-        double changeY = directionY * timeDeltaTime * movementSpeed;
-//        System.out.println("changeX: "+changeX+", changeY: "+changeY+", timeDeltaTime: "+timeDeltaTime);
+        double newX = directionX * timeDeltaTime * movementSpeed + x;
+        double newY = directionY * timeDeltaTime * movementSpeed + y;
 
-//        logging.append("changeX: ");
-//        logging.append(changeX);
-//        logging.append(", changeY: ");
-//        logging.append(changeY);
-//        logging.append(", timeDeltaTime: ");
-//        logging.append(timeDeltaTime);
-//        logging.append('\n');
+        Dimension characterSize = ImageUtilities.getCharacterScreenSize();
+        Dimension backgroundSize = ImageUtilities.getBackgroundScreenSize();
 
-        deltaX += changeX;
-        deltaY += changeY;
-        x += changeX;
-        y += changeY;
+        boolean validX = newX >= 0 && newX+characterSize.width < backgroundSize.width;
+        boolean validY = newY >= 0 && newY+characterSize.height < backgroundSize.height;
+        if (validX)
+            x = newX;
+        if (validY)
+            y = newY;
     }
 
     public Point getPos () {
         return new Point((int)x,(int)y);
     }
 
-    public Point getDeltas () {
-        Point deltas = new Point((int)deltaX,(int)deltaY);
-        this.deltaX = 0;
-        this.deltaY = 0;
-        return deltas;
+    public void setPos (Point newPos) {
+        x = newPos.x;
+        y = newPos.y;
     }
 
     public void log () {
