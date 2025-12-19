@@ -7,7 +7,7 @@ import Graphics.Canvas;
 import Graphics.ScreenLayoutManager;
 import Graphics.ImageUtilities;
 import Sound.AudioManager;
-import Graphics.Image;
+import Graphics.GraphicsObject;
 
 import java.awt.*;
 
@@ -28,6 +28,8 @@ public class Game {
         eventQueue = new AsynchronousDispatch();
         setPoseBase();
         createDevCameraControls();
+        inputManager.addCallback('a',() -> {mainCharacter.setFlipped(true);});
+        inputManager.addCallback('d',() -> {mainCharacter.setFlipped(true);});
         audioManager.play();
     }
 
@@ -37,15 +39,17 @@ public class Game {
     }
 
     private void handleGraphics () {
-        Image backgroundImage = ImageUtilities.getBackground();
-        mainCanvas.draw(backgroundImage,background.getX(),background.getY(),false,background.getLayer());
+        GraphicsObject backgroundImage = ImageUtilities.getBackground();
+        mainCanvas.draw(backgroundImage,background.getX(),background.getY(),background.getLayer());
 
-        Pair<Image,Runnable> imageRunnablePair = mainCharacter.getImageToDrawAndCleanup(Character.MAIN_CHARACTER,
-                mainCharacter.getPose());
-        mainCanvas.draw(imageRunnablePair.getVal1(),mainCharacter.getPos().x+background.getX(),
-                mainCharacter.getPos().y+background.getY(), mainCharacter.getFlipped(),
+        GraphicsObject character = ImageUtilities.getCharacter(Character.MAIN_CHARACTER, mainCharacter.getPose());
+        if (mainCharacter.getFlipped()) {
+            character.flip();
+            mainCharacter.setFlipped(false);
+        }
+        mainCanvas.draw(character,mainCharacter.getPos().x+background.getX(),
+                mainCharacter.getPos().y+background.getY(),
                 ScreenLayoutManager.CHARACTER);
-        imageRunnablePair.getVal2().run();
 
         mainCanvas.refresh();
     }
@@ -77,13 +81,6 @@ public class Game {
         if (!mainCharacter.isWalking()) {
             mainCharacter.setIsWalking(true);
             setPoseWalk();
-        }
-
-        // flipped state
-        if (pressedD) {
-            mainCharacter.setFlipped(false);
-        } else if (pressedA) {
-            mainCharacter.setFlipped(true);
         }
     }
 

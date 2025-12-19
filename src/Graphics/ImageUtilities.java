@@ -8,36 +8,50 @@ import java.awt.Dimension;
 
 
 public class ImageUtilities {
-    private static Image background;
-    private static Image character, walkPose, attackPose, altCharacter, altWalkPose, altAttackPose;
+    private static GraphicsObject background, character, walkPose, attackPose, altCharacter, altWalkPose,
+            altAttackPose;
     private static final FileHandler fileHandler = FileHandler.get();
     private static Dimension characterScreenSize;
     private static Dimension backgroundScreenSize;
     public static void loadCharacters() {
-        character = new Image(fileHandler.readImage("base-pose.png"));
-        walkPose = new Image(fileHandler.readImage("walk-pose.png"));
-        attackPose = new Image(fileHandler.readImage("attack-pose.png"));
-        altCharacter = new Image(fileHandler.readImage("base-pose.png"));
-        altWalkPose = new Image(fileHandler.readImage("walk-pose.png"));
-        altAttackPose = new Image(fileHandler.readImage("attack-pose.png"));
-        characterScreenSize = new Dimension(character.getSource().getWidth(),character.getSource().getHeight());
+        character = new GraphicsObject();
+        walkPose = new GraphicsObject();
+        attackPose = new GraphicsObject();
+        altCharacter = new GraphicsObject();
+        altWalkPose = new GraphicsObject();
+        altAttackPose = new GraphicsObject();
+
+        character.setImage(new Image(fileHandler.readImage("base-pose.png")));
+        walkPose.setImage(new Image(fileHandler.readImage("walk-pose.png")));
+        attackPose.setImage(new Image(fileHandler.readImage("attack-pose.png")));
+        altCharacter.setImage(new Image(fileHandler.readImage("base-pose.png")));
+        altWalkPose.setImage(new Image(fileHandler.readImage("walk-pose.png")));
+        altAttackPose.setImage(new Image(fileHandler.readImage("attack-pose.png")));
+
+        int characterWidth = character.getImage().getSource().getWidth();
+        int characterHeight = character.getImage().getSource().getHeight();
+        characterScreenSize = new Dimension(characterWidth,characterHeight);
     }
 
     public static void loadBackground (int worldNum) {
         String name = worldNum == 0 ? "sand-world.png" : worldNum == 1 ? "middle-world.png" :
                 "forest-world.png";
-        background = new Image(fileHandler.readImage(name));
-        backgroundScreenSize = new Dimension(background.getSource().getWidth(),background.getSource().getHeight());
+        background = new GraphicsObject();
+        background.setImage(new Image(fileHandler.readImage(name)));
+
+        int backgroundWidth = background.getImage().getSource().getWidth();
+        int backgroundHeight = background.getImage().getSource().getHeight();
+        backgroundScreenSize = new Dimension(backgroundWidth,backgroundHeight);
     }
 
-    public static Image getBackground () {
+    public static GraphicsObject getBackground () {
         if (background == null)
             loadBackground(Background.SAND_WORLD);
 
         return background;
     }
 
-    public static Image getCharacter (int character, int pose) {
+    public static GraphicsObject getCharacter (int character, int pose) {
         if (ImageUtilities.character == null)
             loadCharacters();
 

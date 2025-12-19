@@ -13,19 +13,14 @@ public class Canvas extends JPanel {
         layoutManager.setBackgroundSize(size);
     }
 
-    public void draw (Image imToDraw, int x, int y, boolean flipped, int layer) {
+    public void draw (GraphicsObject imToDraw, int x, int y, int layer) {
         // gather info for constraints
         Integer[] constraints = new Integer[3];
         constraints[0] = layer;
         constraints[1] = x;
         constraints[2] = y;
 
-        // wrap in swing object and draw to screen
-        if (flipped)
-            imToDraw.setReversed();
-        else // ensure the wrapper wraps the current source
-            imToDraw.wrap();
-        add(imToDraw.getWrapper(),constraints);
+        add(imToDraw,constraints);
     }
 
     public void refresh () {

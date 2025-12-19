@@ -1,6 +1,7 @@
 package Graphics;
 
-import javax.swing.*;
+import javax.swing.JLabel;
+import javax.swing.ImageIcon;
 import java.awt.image.BufferedImage;
 
 public class Image {
@@ -8,6 +9,7 @@ public class Image {
     private final int id;
     private BufferedImage bufferedImage;
     private BufferedImage reversedImage;
+    private Image flippedImage;
     private JLabel wrapper;
 
     public Image (java.awt.Image imageToWrap) {
@@ -83,5 +85,13 @@ public class Image {
 
     public JLabel getWrapper () {
         return wrapper;
+    }
+
+    public void setFlippedImage (Image flippedImage) {
+        this.flippedImage = flippedImage;
+    }
+
+    public Image getFlippedImage () {
+        return flippedImage;
     }
 }

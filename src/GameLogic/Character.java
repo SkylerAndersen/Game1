@@ -1,11 +1,8 @@
 package GameLogic;
 
-import DataManagement.Pair;
-import Graphics.Image;
 import Graphics.ImageUtilities;
 
 import java.awt.*;
-import java.awt.image.BufferedImage;
 
 public class Character {
     public static final int BASE_POSE = 3, WALK_POSE = 4, ATTACK_POSE = 5, MAIN_CHARACTER = 6, ALT_CHARACTER = 7;
@@ -21,22 +18,6 @@ public class Character {
         logging = new StringBuilder(1000);
         pose = BASE_POSE;
         lastWalked = lastStood = 0;
-    }
-
-    public Pair<Image,Runnable> getImageToDrawAndCleanup (int character, int pose) {
-        // select image for state
-        Image state = ImageUtilities.getCharacter(character,pose);
-
-        // temporarily swap the image for the state with the Base image
-        Image drawing = (character == Character.MAIN_CHARACTER) ? ImageUtilities.getCharacter(6,0) :
-                ImageUtilities.getCharacter(7,0);
-
-        BufferedImage drawingSource = drawing.getSource();
-        if (state != drawing)
-            drawing.changeSource(state.getSource());
-
-        // silently change source back
-        return new Pair<>(drawing, () -> {drawing.changeSourceWithoutWrapping(drawingSource);});
     }
 
     public void setPose (int pose) {
