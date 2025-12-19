@@ -8,40 +8,33 @@ import java.awt.Dimension;
 
 
 public class ImageUtilities {
-    private static GraphicsObject background, character, walkPose, attackPose, altCharacter, altWalkPose,
-            altAttackPose;
     private static final FileHandler fileHandler = FileHandler.get();
+    private static int characterId, walkId, attackId, altCharacterId, altWalkId, altAttackId;
+    private static GraphicsObject character, background;
     private static Dimension characterScreenSize;
     private static Dimension backgroundScreenSize;
     public static void loadCharacters() {
         character = new GraphicsObject();
-        walkPose = new GraphicsObject();
-        attackPose = new GraphicsObject();
-        altCharacter = new GraphicsObject();
-        altWalkPose = new GraphicsObject();
-        altAttackPose = new GraphicsObject();
 
-        character.setImage(new Image(fileHandler.readImage("base-pose.png")));
-        walkPose.setImage(new Image(fileHandler.readImage("walk-pose.png")));
-        attackPose.setImage(new Image(fileHandler.readImage("attack-pose.png")));
-        altCharacter.setImage(new Image(fileHandler.readImage("base-pose.png")));
-        altWalkPose.setImage(new Image(fileHandler.readImage("walk-pose.png")));
-        altAttackPose.setImage(new Image(fileHandler.readImage("attack-pose.png")));
+        characterId = character.addState(new Image(fileHandler.readImage("base-pose.png")));
+        walkId = character.addState(new Image(fileHandler.readImage("walk-pose.png")));
+        attackId = character.addState(new Image(fileHandler.readImage("attack-pose.png")));
+        altCharacterId = character.addState(new Image(fileHandler.readImage("base-pose.png")));
+        altWalkId = character.addState(new Image(fileHandler.readImage("walk-pose.png")));
+        altAttackId = character.addState(new Image(fileHandler.readImage("attack-pose.png")));
 
-        int characterWidth = character.getImage().getSource().getWidth();
-        int characterHeight = character.getImage().getSource().getHeight();
-        characterScreenSize = new Dimension(characterWidth,characterHeight);
+        character.setState(characterId);
+        characterScreenSize = character.getSize();
     }
 
     public static void loadBackground (int worldNum) {
         String name = worldNum == 0 ? "sand-world.png" : worldNum == 1 ? "middle-world.png" :
                 "forest-world.png";
         background = new GraphicsObject();
-        background.setImage(new Image(fileHandler.readImage(name)));
+        int stateId = background.addState(new Image(fileHandler.readImage(name)));
+        background.setState(stateId);
 
-        int backgroundWidth = background.getImage().getSource().getWidth();
-        int backgroundHeight = background.getImage().getSource().getHeight();
-        backgroundScreenSize = new Dimension(backgroundWidth,backgroundHeight);
+        backgroundScreenSize = background.getSize();
     }
 
     public static GraphicsObject getBackground () {
@@ -55,15 +48,18 @@ public class ImageUtilities {
         if (ImageUtilities.character == null)
             loadCharacters();
 
-        return (character == Character.MAIN_CHARACTER) ? switch (pose) {
-            case Character.ATTACK_POSE -> attackPose;
-            case Character.WALK_POSE -> walkPose;
-            default -> ImageUtilities.character;
+        int stateId = (character == Character.MAIN_CHARACTER) ? switch (pose) {
+            case Character.ATTACK_POSE -> attackId;
+            case Character.WALK_POSE -> walkId;
+            default -> characterId;
         } : switch (pose) {
-            case Character.ATTACK_POSE -> altAttackPose;
-            case Character.WALK_POSE -> altWalkPose;
-            default -> altCharacter;
+            case Character.ATTACK_POSE -> altAttackId;
+            case Character.WALK_POSE -> altWalkId;
+            default -> altCharacterId;
         };
+
+        ImageUtilities.character.setState(stateId);
+        return ImageUtilities.character;
     }
 
     public static Dimension getCharacterScreenSize () {

@@ -1,56 +1,56 @@
 package Graphics;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.util.HashMap;
 
 public class GraphicsObject extends JLabel {
-    public static final int EQUALS = 0, REVERSE = -1, DIFFERS = 1;
     private static int numGraphicsObjects;
     private final int id;
-    private Image image;
+    private int currentState;
+    private boolean flipped;
+    private final HashMap<Integer,Image> states;
 
     public GraphicsObject () {
-        id = numGraphicsObjects;
-        numGraphicsObjects++;
+        id = numGraphicsObjects++;
+        flipped = false;
+        states = new HashMap<>();
+        setIcon(new ImageIcon());
+        currentState = -1;
     }
 
-    public void setImage (Image image) {
-        this.image = image;
-        setIcon(new ImageIcon(image.getSource()));
+    public int addState (Image state) {
+        if (states.containsKey(state.getId()))
+            return -1;
 
-        // create flipped counterpart
-        BufferedImage reverse = new BufferedImage(image.getSource().getWidth(),
-                image.getSource().getHeight(),BufferedImage.TYPE_INT_ARGB);
-        for (int i = 0; i <= reverse.getWidth()/2; i++) {
-            for (int j = 0; j < reverse.getHeight(); j++) {
-                reverse.setRGB(i,j,image.getSource().getRGB(image.getSource().getWidth()-1-i,j));
-                reverse.setRGB(image.getSource().getWidth()-1-i,j,image.getSource().getRGB(i,j));
-            }
-        }
-
-        image.setFlippedImage(new Image(reverse));
-        image.getFlippedImage().setFlippedImage(image);
-
+        states.put(state.getId(),state);
+        return state.getId();
     }
 
-    public void flip () {
-        image = image.getFlippedImage();
-        setIcon(new ImageIcon(image.getSource()));
+    public void setState (int id) {
+        if (!states.containsKey(id) || currentState == id)
+            return;
+
+        currentState = id;
+
+        Image stateImage = states.get(currentState);
+        BufferedImage stateSource = flipped ? stateImage.getReverseSource() : stateImage.getSource();
+        ((ImageIcon) getIcon()).setImage(stateSource);
     }
 
-    public int compare (GraphicsObject other) {
-        if (other.image.getId() == image.getId())
-            return EQUALS;
-        if (other.image.getFlippedImage().getId() == image.getId())
-            return REVERSE;
-        return DIFFERS;
-    }
-
-    public Image getImage () {
-        return image;
+    public void setFlipped (boolean flipped) {
+        this.flipped = flipped;
     }
 
     public int getId () {
         return id;
+    }
+
+    public Dimension getSize () {
+        if (!states.containsKey(currentState))
+            return new Dimension(0,0);
+
+        return states.get(currentState).getSize();
     }
 }

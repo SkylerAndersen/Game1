@@ -144,14 +144,10 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
 
     @Override
     public void addLayoutComponent(Component comp, Object constraints) {
-        if (!(constraints instanceof Integer[]))
-            throw new RuntimeException("Invalid Constrains Parameter.");
+        if (!(constraints instanceof Integer[] layerXY) || layerXY.length != 3)
+            throw new RuntimeException("Invalid Constraints Parameter.");
 
-        Integer[] layerXY = (Integer[])constraints;
-        if (layerXY.length != 3)
-            throw new RuntimeException("Invalid Constrains Parameter.");
-
-        if (!(comp instanceof JLabel) || ((JLabel) comp).getIcon() == null)
+        if (!(comp instanceof JLabel label) || label.getIcon() == null)
             return;
 
         // get the image properties
@@ -162,12 +158,7 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
             coordinates.put(comp,XY);
 
         // get the image itself
-        java.awt.Image image = ((ImageIcon) ((JLabel) comp).getIcon()).getImage();
-        BufferedImage graphicsElement = new BufferedImage(image.getWidth(null),
-                image.getHeight(null),BufferedImage.TYPE_INT_ARGB);
-        graphicsElement.getGraphics().drawImage(image,0,0,null);
-        if (graphicsElements.containsKey(comp))
-            graphicsElements.remove(comp);
+        BufferedImage graphicsElement = (BufferedImage) ((ImageIcon) label.getIcon()).getImage();
         graphicsElements.put(comp,graphicsElement);
     }
 

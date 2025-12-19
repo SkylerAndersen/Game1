@@ -2,7 +2,6 @@ package GameLogic;
 
 import ApplicationManagement.AsynchronousDispatch;
 import ApplicationManagement.InputManager;
-import DataManagement.Pair;
 import Graphics.Canvas;
 import Graphics.ScreenLayoutManager;
 import Graphics.ImageUtilities;
@@ -29,7 +28,7 @@ public class Game {
         setPoseBase();
         createDevCameraControls();
         inputManager.addCallback('a',() -> {mainCharacter.setFlipped(true);});
-        inputManager.addCallback('d',() -> {mainCharacter.setFlipped(true);});
+        inputManager.addCallback('d',() -> {mainCharacter.setFlipped(false);});
         audioManager.play();
     }
 
@@ -43,10 +42,7 @@ public class Game {
         mainCanvas.draw(backgroundImage,background.getX(),background.getY(),background.getLayer());
 
         GraphicsObject character = ImageUtilities.getCharacter(Character.MAIN_CHARACTER, mainCharacter.getPose());
-        if (mainCharacter.getFlipped()) {
-            character.flip();
-            mainCharacter.setFlipped(false);
-        }
+        character.setFlipped(mainCharacter.getFlipped());
         mainCanvas.draw(character,mainCharacter.getPos().x+background.getX(),
                 mainCharacter.getPos().y+background.getY(),
                 ScreenLayoutManager.CHARACTER);
