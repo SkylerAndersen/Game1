@@ -1,16 +1,18 @@
 package Graphics;
 
 import DataManagement.FileHandler;
-import GameLogic.Background;
 import GameLogic.Character;
 
 import java.awt.Dimension;
+import java.util.ArrayList;
 
 
 public class ImageUtilities {
     private static final FileHandler fileHandler = FileHandler.get();
     private static int characterId, walkId, attackId, altCharacterId, altWalkId, altAttackId;
+    private static int slimeIdle1, slimeIdle2;
     private static GraphicsObject character, background;
+    private static ArrayList<GraphicsObject> slimes;
     private static Dimension characterScreenSize;
     private static Dimension backgroundScreenSize;
     public static void loadCharacters() {
@@ -27,9 +29,26 @@ public class ImageUtilities {
         characterScreenSize = character.getSize();
     }
 
+    public static void loadSlime (int id) {
+        if (slimes == null)
+            slimes = new ArrayList<>();
+
+        Image state1 = new Image(fileHandler.readImage("slime-idle-1.png"));
+        Image state2 = new Image(fileHandler.readImage("slime-idle-2.png"));
+        slimeIdle1 = state1.getId();
+        slimeIdle2 = state2.getId();
+        for (int i = 0; i <= id; i++) {
+            GraphicsObject currSlime = new GraphicsObject();
+            slimes.add(i,currSlime);
+            currSlime.addState(state1);
+            currSlime.addState(state2);
+            currSlime.setState(slimeIdle1);
+        }
+    }
+
     public static void loadBackground (int worldNum) {
         String name = worldNum == 0 ? "sand-world.png" : worldNum == 1 ? "middle-world.png" :
-                "forest-world.png";
+                worldNum == 2 ? "forest-world.png" : "map.png";
         background = new GraphicsObject();
         int stateId = background.addState(new Image(fileHandler.readImage(name)));
         background.setState(stateId);
@@ -39,7 +58,7 @@ public class ImageUtilities {
 
     public static GraphicsObject getBackground () {
         if (background == null)
-            loadBackground(Background.SAND_WORLD);
+            loadBackground(-1);
 
         return background;
     }
@@ -60,6 +79,13 @@ public class ImageUtilities {
 
         ImageUtilities.character.setState(stateId);
         return ImageUtilities.character;
+    }
+
+    public static GraphicsObject getSlime (int id) {
+        if (slimes == null || slimes.size() <= id || slimes.get(id) == null)
+            loadSlime(id);
+
+        return slimes.get(id);
     }
 
     public static Dimension getCharacterScreenSize () {
