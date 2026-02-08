@@ -1,34 +1,33 @@
 package Graphics;
 
-import ApplicationManagement.InputManager;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.Image;
 import java.awt.image.BufferedImage;
+import java.lang.reflect.Array;
 import java.util.HashMap;
 
 public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
     public static final Integer BACKGROUND = 0, CHARACTER = 1, ITEM = 2;
     private Container parent;
-    private HashMap<Component,BufferedImage> graphicsElements;
-    private HashMap<Component,Integer> layer;
+    @SuppressWarnings("unchecked")
+    private final HashMap<Component,BufferedImage>[] graphicsElements =
+            (HashMap<Component, BufferedImage>[]) Array.newInstance(HashMap.class,3);
     private HashMap<Component,int[]> coordinates;
     private Dimension backgroundSize;
     private JLabel imageContainer;
-    private boolean hasExported;
     private double zoomFactor;
-    private final InputManager inputManager = InputManager.get();
 
     public ScreenLayoutManager(Container parent) {
         this.parent = parent;
         layer = new HashMap<>();
         coordinates = new HashMap<>();
-        graphicsElements = new HashMap<>();
+        graphicsElements[ScreenLayoutManager.BACKGROUND] = new HashMap<>();
+        graphicsElements[ScreenLayoutManager.CHARACTER] = new HashMap<>();
+        graphicsElements[ScreenLayoutManager.ITEM] = new HashMap<>();
         imageContainer = new JLabel();
         backgroundSize = parent.getSize();
         parent.add("Container",imageContainer);
-        hasExported = false;
         zoomFactor = 1.0;
     }
 
@@ -42,9 +41,11 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
     public void removeLayoutComponent(Component comp) {
         if (!(comp instanceof JLabel) || ((JLabel) comp).getIcon() == null)
             return;
-        layer.remove(comp);
+
         coordinates.remove(comp);
-        graphicsElements.remove(comp);
+        graphicsElements[ScreenLayoutManager.BACKGROUND].remove(comp);
+        graphicsElements[ScreenLayoutManager.CHARACTER].remove(comp);
+        graphicsElements[ScreenLayoutManager.ITEM].remove(comp);
     }
 
     @Override
@@ -57,78 +58,45 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
     public Dimension minimumLayoutSize(Container parent) {
         return parent.getMinimumSize();
     }
+    private void layoutContainerHelper (BufferedImage canvas, int layer) {
+        for (Component imageComponent : graphicsElements[layer].keySet()) {
+            int x = coordinates.get(imageComponent)[0];
+            int y = coordinates.get(imageComponent)[1];
+            BufferedImage image = graphicsElements[layer].get(imageComponent);
+            int currWidth = image.getWidth();
+            int currHeight = image.getHeight();
+            for (int i = 0; i < currWidth && i + x < backgroundSize.width; i++) {
+                for (int j = 0; j < currHeight && j + y < backgroundSize.height; j++) {
+                    if (image.getRGB(i,j) >> 24 == 0)
+                        continue;
+                    boolean outOfBoundsX = i+x >= backgroundSize.width || i+x < 0;
+                    boolean outOfBoundsY = j+y >= backgroundSize.height || j+y < 0;
+                    if (!outOfBoundsX && !outOfBoundsY)
+                        canvas.setRGB(i+x,j+y,image.getRGB(i,j));
+                }
+            }
+        }
+        canvas.flush();
+    }
 
     @Override
     public void layoutContainer(Container parent) {
-        int bgWidth = backgroundSize.width;
-        int bgHeight = backgroundSize.height;
         int width = parent.getSize().width;
         int height = parent.getSize().height;
-        double scaleFactor = (double)height / bgHeight;
+        double scaleFactor = (double)height / backgroundSize.height;
         scaleFactor *= zoomFactor;
 //        System.out.printf("Height: %d, bgHeight: %d\n",height,bgHeight);
 
         // generate image to draw
-        BufferedImage canvas = new BufferedImage(bgWidth,bgHeight,BufferedImage.TYPE_INT_ARGB);
-        for (Component imageComponent : graphicsElements.keySet()) {
-            if (layer.get(imageComponent).equals(ScreenLayoutManager.BACKGROUND)) {
-                int x = coordinates.get(imageComponent)[0];
-                int y = coordinates.get(imageComponent)[1];
-                BufferedImage image = graphicsElements.get(imageComponent);
-                int currWidth = image.getWidth();
-                int currHeight = image.getHeight();
-                for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
-                    for (int j = 0; j < currHeight && j + y < bgHeight; j++) {
-                        if (image.getRGB(i,j) >> 24 == 0)
-                            continue;
-                        boolean outOfBoundsX = i+x >= bgWidth || i+x < 0;
-                        boolean outOfBoundsY = j+y >= bgHeight || j+y < 0;
-                        if (!outOfBoundsX && !outOfBoundsY)
-                            canvas.setRGB(i+x,j+y,image.getRGB(i,j));
-                    }
-                }
-            }
-            canvas.flush();
-        }
-        for (Component imageComponent : graphicsElements.keySet()) {
-            if (layer.get(imageComponent).equals(ScreenLayoutManager.CHARACTER)) {
-                int x = coordinates.get(imageComponent)[0];
-                int y = coordinates.get(imageComponent)[1];
-                BufferedImage image = graphicsElements.get(imageComponent);
-                int currWidth = image.getWidth();
-                int currHeight = image.getHeight();
-//                System.out.println("bgWidth: "+bgWidth+", bgHeight: "+bgHeight);
-                for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
-                    for (int j = 0; j < currHeight && j + y < bgHeight; j++) {
-                        if (image.getRGB(i,j) >> 24 == 0)
-                            continue;
-                        canvas.setRGB(i+x,j+y,image.getRGB(i,j));
-                    }
-                }
-            }
-            canvas.flush();
-        }
-        for (Component imageComponent : graphicsElements.keySet()) {
-            if (layer.get(imageComponent).equals(ScreenLayoutManager.ITEM)) {
-                int x = coordinates.get(imageComponent)[0];
-                int y = coordinates.get(imageComponent)[1];
-                BufferedImage image = graphicsElements.get(imageComponent);
-                int currWidth = image.getWidth();
-                int currHeight = image.getHeight();
-                for (int i = 0; i < currWidth && i + x < bgWidth; i++) {
-                    for (int j = 0; j < currHeight && j + x < bgHeight; j++) {
-                        if (image.getRGB(i,j) >> 24 == 0)
-                            continue;
-                        canvas.setRGB(i+x,j+y,image.getRGB(i,j));
-                    }
-                }
-            }
-            canvas.flush();
-        }
+        BufferedImage canvas = new BufferedImage(backgroundSize.width,backgroundSize.height,
+                BufferedImage.TYPE_INT_ARGB);
+        layoutContainerHelper(canvas,ScreenLayoutManager.BACKGROUND);
+        layoutContainerHelper(canvas,ScreenLayoutManager.CHARACTER);
+        layoutContainerHelper(canvas, ScreenLayoutManager.ITEM);
 
         // scale image
-        int scaledWidth = (int)(bgWidth * scaleFactor);
-        int scaledHeight = (int)(bgHeight * scaleFactor);
+        int scaledWidth = (int)(backgroundSize.width * scaleFactor);
+        int scaledHeight = (int)(backgroundSize.height * scaleFactor);
 //        System.out.println(""+bgWidth+" "+bgHeight+" "+scaleFactor+" ");
         ImageIcon toDraw = new ImageIcon(canvas.getScaledInstance(scaledWidth,
                 scaledHeight,Image.SCALE_FAST));
@@ -151,15 +119,13 @@ public class ScreenLayoutManager implements LayoutManager, LayoutManager2 {
             return;
 
         // get the image properties
-        if (!layer.containsKey(comp))
-            layer.put(comp,layerXY[0]);
         int[] XY = {layerXY[1],layerXY[2]};
         if (!coordinates.containsKey(comp))
             coordinates.put(comp,XY);
 
         // get the image itself
         BufferedImage graphicsElement = (BufferedImage) ((ImageIcon) label.getIcon()).getImage();
-        graphicsElements.put(comp,graphicsElement);
+        graphicsElements[layerXY[0]].put(comp,graphicsElement);
     }
 
     public void setBackgroundSize (Dimension newSize) {
